@@ -2,7 +2,7 @@ general:
   save_path:  './example_output'
   model_path: 'runwayml/stable-diffusion-v1-5'
   unet_config: './conf/unet/config.json'
-  real_image_editing: False,
+  real_image_editing: False
   controlnet_path: 'lllyasviel/sd-controlnet-depth'
 
 inference:

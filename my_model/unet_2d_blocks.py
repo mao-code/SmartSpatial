@@ -33,7 +33,7 @@ from diffusers.models.resnet import (
     ResnetBlockCondNorm2D,
     Upsample2D,
 )
-from diffusers.models.transformers.dual_transformer_2d import DualTransformer2DModel
+from .transformers.dual_transformer_2d import DualTransformer2DModel
 from .transformers.transformer_2d import Transformer2DModel
 
 
