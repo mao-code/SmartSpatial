@@ -127,7 +127,7 @@ class Attention(nn.Module):
         super().__init__()
 
         # To prevent circular import.
-        from .normalization import FP32LayerNorm, RMSNorm
+        from diffusers.models.normalization import FP32LayerNorm, RMSNorm
 
         self.inner_dim = out_dim if out_dim is not None else dim_head * heads
         self.inner_kv_dim = self.inner_dim if kv_heads is None else dim_head * kv_heads
