@@ -2460,6 +2460,10 @@ class AttnProcessor2_0:
         key = attn.to_k(encoder_hidden_states)
         value = attn.to_v(encoder_hidden_states)
 
+        query_prime = attn.head_to_batch_dim(query)
+        key_prime = attn.head_to_batch_dim(key)
+        attention_probs = attn.get_attention_scores(query_prime, key_prime, attention_mask)
+
         inner_dim = key.shape[-1]
         head_dim = inner_dim // attn.heads
 
@@ -2467,6 +2471,7 @@ class AttnProcessor2_0:
 
         key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
         value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+
 
         if attn.norm_q is not None:
             query = attn.norm_q(query)
@@ -2495,7 +2500,7 @@ class AttnProcessor2_0:
 
         hidden_states = hidden_states / attn.rescale_output_factor
 
-        return hidden_states
+        return hidden_states, attention_probs
 
 
 class StableAudioAttnProcessor2_0:
