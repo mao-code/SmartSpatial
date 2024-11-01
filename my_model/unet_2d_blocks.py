@@ -881,7 +881,9 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                     attention_mask=attention_mask,
                     encoder_attention_mask=encoder_attention_mask,
                     return_dict=False,
-                )[0]
+                )
+                hidden_states = hidden_states[0]
+
                 hidden_states = torch.utils.checkpoint.checkpoint(
                     create_custom_forward(resnet),
                     hidden_states,
@@ -896,7 +898,9 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                     attention_mask=attention_mask,
                     encoder_attention_mask=encoder_attention_mask,
                     return_dict=False,
-                )[0]
+                )
+                hidden_states = hidden_states[0]
+
                 hidden_states = resnet(hidden_states, temb)
 
                 mid_attn.append(cross_attn_prob)
@@ -1302,7 +1306,8 @@ class CrossAttnDownBlock2D(nn.Module):
                     attention_mask=attention_mask,
                     encoder_attention_mask=encoder_attention_mask,
                     return_dict=False, # This will return the only output
-                )[0]
+                )
+                hidden_states = hidden_states[0]
 
             # apply additional residuals to the output of the last pair of resnet and attention blocks
             if i == len(blocks) - 1 and additional_residuals is not None:
@@ -2567,7 +2572,8 @@ class CrossAttnUpBlock2D(nn.Module):
                     attention_mask=attention_mask,
                     encoder_attention_mask=encoder_attention_mask,
                     return_dict=False,
-                )[0]
+                )
+                hidden_states = hidden_states[0]
 
             cross_attn_prob_list.append(cross_attn_prob)
 
