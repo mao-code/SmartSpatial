@@ -472,7 +472,7 @@ class Transformer2DModel(LegacyModelMixin, LegacyConfigMixin):
             )
 
         if not return_dict:
-            return (output,)
+            return (output,), attn_prob
 
         return Transformer2DModelOutput(sample=output), attn_prob
 

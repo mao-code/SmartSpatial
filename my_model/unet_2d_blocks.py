@@ -1154,7 +1154,7 @@ class AttnDownBlock2D(nn.Module):
 
         return hidden_states, output_states
 
-
+# Main CA Block
 class CrossAttnDownBlock2D(nn.Module):
     def __init__(
         self,
@@ -1301,7 +1301,7 @@ class CrossAttnDownBlock2D(nn.Module):
                     cross_attention_kwargs=cross_attention_kwargs,
                     attention_mask=attention_mask,
                     encoder_attention_mask=encoder_attention_mask,
-                    return_dict=False,
+                    return_dict=False, # This will return the only output
                 )[0]
 
             # apply additional residuals to the output of the last pair of resnet and attention blocks
