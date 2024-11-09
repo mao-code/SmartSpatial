@@ -4,6 +4,8 @@ from PIL import Image, ImageDraw, ImageFont
 import logging
 import os
 
+import re
+import string
 
 def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
     loss = 0
@@ -61,7 +63,8 @@ def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
 
 def Pharse2idx(prompt, phrases):
     phrases = [x.strip() for x in phrases.split(';')]
-    prompt_list = prompt.strip('.').replace(',','').replace('\'s', '').split(' ')
+    # prompt_list = prompt.strip('.').replace(',','').replace('\'s', '').split(' ')
+    prompt_list = sentence_to_list(prompt)
 
     object_positions = []
     for obj in phrases:
@@ -72,6 +75,32 @@ def Pharse2idx(prompt, phrases):
         object_positions.append(obj_position)
 
     return object_positions
+
+def sentence_to_list(sentence):
+    """
+    Converts a sentence into a list of words by removing punctuation and handling contractions.
+    
+    Parameters:
+        sentence (str): The input sentence to be processed.
+        
+    Returns:
+        List[str]: A list of cleaned, lowercase words.
+    """
+    # Step 1: Remove possessive 's (e.g., "here's" -> "here")
+    sentence = re.sub(r"'s\b", "", sentence)
+    
+    # Step 2: Remove all other punctuation
+    # Create a translation table for string.punctuation
+    translator = str.maketrans('', '', string.punctuation)
+    sentence = sentence.translate(translator)
+    
+    # Step 3: Convert to lowercase
+    sentence = sentence.lower()
+    
+    # Step 4: Split into words
+    word_list = sentence.split()
+    
+    return word_list
 
 def draw_box(pil_img, bboxes, phrases, save_path):
     draw = ImageDraw.Draw(pil_img)
