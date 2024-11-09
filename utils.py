@@ -61,7 +61,8 @@ def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
 
 def Pharse2idx(prompt, phrases):
     phrases = [x.strip() for x in phrases.split(';')]
-    prompt_list = prompt.strip('.').replace(',','').split(' ')
+    prompt_list = prompt.strip('.').replace(',','').replace('\'s', '').split(' ')
+
     object_positions = []
     for obj in phrases:
         obj_position = []
