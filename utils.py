@@ -87,20 +87,30 @@ def draw_box(pil_img, bboxes, phrases, save_path):
 
 def setup_logger(save_path, logger_name):
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)  # Set to lowest level to capture all logs
 
-    # Create a file handler to write logs to a file
-    file_handler = logging.FileHandler(os.path.join(save_path, f"{logger_name}.log"))
-    file_handler.setLevel(logging.INFO)
+    # Clear existing handlers
+    if logger.hasHandlers():
+        logger.handlers.clear()
 
+    log_file = os.path.join(save_path, f"{logger_name}.log")
     # Create a formatter to format log messages
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    # Set the formatter for the file handler
+    # Create a file handler to write logs to a file
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
-
-    # Add the file handler to the logger
     logger.addHandler(file_handler)
+
+    # Console handler for WARNING and above
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.WARNING)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # Optionally, prevent logs from propagating to ancestor loggers
+    logger.propagate = False
 
     return logger
 
