@@ -7,6 +7,41 @@ import os
 import re
 import string
 
+bbox_ref_mapping = {
+    "front": [    
+        {'caption': 'ball', 'box': {'x': 179.93, 'y': 288.83, 'w': 135.23, 'h': 134.28}},
+        {'caption': 'box', 'box': {'x': 111, 'y': 87, 'w': 300.5, 'h': 256.5}}
+    ],
+    "behind": [
+        {'caption': 'ball', 'box': {'x': 104.5, 'y': 78, 'w': 311, 'h': 292}},
+        {'caption': 'box', 'box': {'x': 155.5, 'y': 251.5, 'w': 215, 'h': 185.5}}
+    ],
+    "left": [
+        {'caption': 'ball', 'box': {'x': 30, 'y': 208, 'w': 167.5, 'h': 165}},
+        {'caption': 'box', 'box': {'x': 212, 'y': 106, 'w': 259, 'h': 268}}
+    ],
+    "right": [
+        {'caption': 'ball', 'box': {'x': 330, 'y': 217, 'w': 137, 'h': 133}},
+        {'caption': 'box', 'box': {'x': 75, 'y': 167, 'w': 191, 'h': 202.5}}
+    ],
+    "on": [
+        {'caption': 'ball', 'box': {'x': 165, 'y': 80.5, 'w': 182.5, 'h': 182.5}},
+        {'caption': 'box', 'box': {'x': 86, 'y': 220, 'w': 343.5, 'h': 224}}
+    ],
+    "under": [
+        {'caption': 'ball', 'box': {'x': 115.5, 'y': 181, 'w': 272, 'h': 265}},
+        {'caption': 'box', 'box': {'x': 175, 'y': 43.5, 'w': 159, 'h': 166.5}}
+    ],
+    "above": [
+        {'caption': 'ball', 'box': {'x': 194, 'y': 82, 'w': 117, 'h': 119}},
+        {'caption': 'box', 'box': {'x': 154, 'y': 275, 'w': 193.5, 'h': 162.5}}
+    ],
+    "below": [
+        {'caption': 'ball', 'box': {'x': 181.5, 'y': 261, 'w': 144.5, 'h': 147.5}},
+        {'caption': 'box', 'box': {'x': 164, 'y': 66.5, 'w': 181.5, 'h': 157}}
+    ]
+}
+
 def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
     loss = 0
     object_number = len(bboxes)
