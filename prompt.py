@@ -1,340 +1,292 @@
 prompt_datas_front = [
     {
-        'prompt': 'A dog is in front of a car in the street.',
-        'prompt_meta': {
-            'center': 'car',
-            'objects': [{'obj': 'dog', 'pos': 'front'}],
-            'background': 'street'
-        }
-    },
-    {
-        'prompt': 'A sports ball is in front of a bench in a park.',
+        'prompt': 'A cat is in front of a bench in the park.',
         'prompt_meta': {
             'center': 'bench',
-            'objects': [{'obj': 'sports ball', 'pos': 'front'}],
+            'objects': [{'obj': 'cat', 'pos': 'front'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'A small bird is in front of a large potted plant in a garden.',
+        'prompt': 'A bicycle is in front of a car at a traffic signal.',
         'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'front'}],
-            'background': 'garden'
+            'center': 'car',
+            'objects': [{'obj': 'bicycle', 'pos': 'front'}],
+            'background': 'traffic signal'
         }
     },
     {
-        'prompt': 'A cat is in front of a large sofa in a cozy living room.',
+        'prompt': 'A bird is in front of a potted plant on a balcony.',
+        'prompt_meta': {
+            'center': 'potted plant',
+            'objects': [{'obj': 'bird', 'pos': 'front'}],
+            'background': 'balcony'
+        }
+    },
+    {
+        'prompt': 'A dog is in front of a couch in the living room.',
         'prompt_meta': {
             'center': 'couch',
-            'objects': [{'obj': 'cat', 'pos': 'front'}],
+            'objects': [{'obj': 'dog', 'pos': 'front'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A bottle is in front of a large vase on a wooden table.',
+        'prompt': 'A motorcycle is in front of a bus at the bus stop.',
         'prompt_meta': {
-            'center': 'vase',
-            'objects': [{'obj': 'bottle', 'pos': 'front'}],
+            'center': 'bus',
+            'objects': [{'obj': 'motorcycle', 'pos': 'front'}],
+            'background': 'bus stop'
+        }
+    },
+    {
+        'prompt': 'A teddy bear is in front of a backpack in the family room.',
+        'prompt_meta': {
+            'center': 'backpack',
+            'objects': [{'obj': 'teddy bear', 'pos': 'front'}],
+            'background': 'family room'
+        }
+    },
+    {
+        'prompt': 'A chair is in front of a dining table in the dining area.',
+        'prompt_meta': {
+            'center': 'dining table',
+            'objects': [{'obj': 'chair', 'pos': 'front'}],
+            'background': 'dining area'
+        }
+    },
+    {
+        'prompt': 'A cat is in front of a refrigerator in the kitchen.',
+        'prompt_meta': {
+            'center': 'refrigerator',
+            'objects': [{'obj': 'person', 'pos': 'front'}],
+            'background': 'kitchen'
+        }
+    },
+    {
+        'prompt': 'A wine glass is in front of a toaster on the table.',
+        'prompt_meta': {
+            'center': 'toaster',
+            'objects': [{'obj': 'wine glass', 'pos': 'front'}],
             'background': 'table'
         }
     },
     {
-        'prompt': 'A cup is in front of a laptop on a desk in an office.',
+        'prompt': 'A donut is in front of a suitcase in the hallway.',
+        'prompt_meta': {
+            'center': 'suitcase',
+            'objects': [{'obj': 'donut', 'pos': 'front'}],
+            'background': 'hallway'
+        }
+    },
+    {
+        'prompt': 'A tie is in front of a person.',
+        'prompt_meta': {
+            'center': 'person',
+            'objects': [{'obj': 'tie', 'pos': 'front'}],
+            'background': ''
+        }
+    },
+    {
+        'prompt': 'An apple is in front of a bowl on the dining table.',
+        'prompt_meta': {
+            'center': 'bowl',
+            'objects': [{'obj': 'apple', 'pos': 'front'}],
+            'background': 'dining table'
+        }
+    },
+    {
+        'prompt': 'A bicycle is in front of a bus in the street.',
+        'prompt_meta': {
+            'center': 'bus',
+            'objects': [{'obj': 'bicycle', 'pos': 'front'}],
+            'background': 'street'
+        }
+    },
+    {
+        'prompt': 'An orange is in front of a vase on a shelf.',
+        'prompt_meta': {
+            'center': 'vase',
+            'objects': [{'obj': 'orange', 'pos': 'front'}],
+            'background': 'shelf'
+        }
+    },
+    {
+        'prompt': 'A mouse is in front of a laptop on a desk.',
         'prompt_meta': {
             'center': 'laptop',
-            'objects': [{'obj': 'cup', 'pos': 'front'}],
-            'background': 'office'
-        }
-    },
-    {
-        'prompt': 'A sheep is in front of a cow in a meadow.',
-        'prompt_meta': {
-            'center': 'cow',
-            'objects': [{'obj': 'sheep', 'pos': 'front'}],
-            'background': 'meadow'
-        }
-    },
-    {
-        'prompt': 'A vase is in front of a sofa in the living room.',
-        'prompt_meta': {
-            'center': 'couch',
-            'objects': [{'obj': 'vase', 'pos': 'front'}],
-            'background': 'living room'
-        }
-    },
-    {
-        'prompt': 'A cat is in front of a car in a garage.',
-        'prompt_meta': {
-            'center': 'car',
-            'objects': [{'obj': 'cat', 'pos': 'front'}],
-            'background': 'garage'
-        }
-    },
-    {
-        'prompt': 'A small boat is in front of a large boat at the harbor.',
-        'prompt_meta': {
-            'center': 'boat',
-            'objects': [{'obj': 'boat', 'pos': 'front'}],
-            'background': 'harbor'
-        }
-    },
-    {
-        'prompt': 'A book is in front of a laptop on a school desk.',
-        'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'front'}],
+            'objects': [{'obj': 'mouse', 'pos': 'front'}],
             'background': 'desk'
-        }
-    },
-    {
-        'prompt': 'A dog is in front of a large bench in the park.',
-        'prompt_meta': {
-            'center': 'bench',
-            'objects': [{'obj': 'dog', 'pos': 'front'}],
-            'background': 'park'
-        }
-    },
-    {
-        'prompt': 'A bird is in front of a potted plant in a sunny garden.',
-        'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'front'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A book is in front of a clock on a nightstand.',
-        'prompt_meta': {
-            'center': 'clock',
-            'objects': [{'obj': 'book', 'pos': 'front'}],
-            'background': 'nightstand'
-        }
-    },
-    {
-        'prompt': 'A small boat is in front of a large boat in the ocean.',
-        'prompt_meta': {
-            'center': 'boat',
-            'objects': [{'obj': 'boat', 'pos': 'front'}],
-            'background': 'ocean'
-        }
-    },
-    {
-        'prompt': 'A remote is in front of a large couch in the living room.',
-        'prompt_meta': {
-            'center': 'couch',
-            'objects': [{'obj': 'remote', 'pos': 'front'}],
-            'background': 'living room'
-        }
-    },
-    {
-        'prompt': 'A person is in front of a bicycle at the playground.',
-        'prompt_meta': {
-            'center': 'bicycle',
-            'objects': [{'obj': 'person', 'pos': 'front'}],
-            'background': 'playground'
         }
     }
 ]
 
 prompt_datas_behind = [
     {
-        'prompt': 'A car is behind a dog in the street.',
+        'prompt': 'A bench is behind a cat in the park.',
         'prompt_meta': {
-            'center': 'dog',
-            'objects': [{'obj': 'car', 'pos': 'behind'}],
-            'background': 'street'
-        }
-    },
-    {
-        'prompt': 'A bench is behind a sports ball in a park.',
-        'prompt_meta': {
-            'center': 'sports ball',
+            'center': 'cat',
             'objects': [{'obj': 'bench', 'pos': 'behind'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'A large potted plant is behind a small bird in a garden.',
+        'prompt': 'A car is behind a bicycle at a traffic signal.',
         'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'potted plant', 'pos': 'behind'}],
-            'background': 'garden'
+            'center': 'bicycle',
+            'objects': [{'obj': 'car', 'pos': 'behind'}],
+            'background': 'traffic signal'
         }
     },
     {
-        'prompt': 'A large couch is behind a cat in a cozy living room.',
+        'prompt': 'A potted plant is behind a bird on a balcony.',
         'prompt_meta': {
-            'center': 'cat',
+            'center': 'bird',
+            'objects': [{'obj': 'potted plant', 'pos': 'behind'}],
+            'background': 'balcony'
+        }
+    },
+    {
+        'prompt': 'A couch is behind a dog in the living room.',
+        'prompt_meta': {
+            'center': 'dog',
             'objects': [{'obj': 'couch', 'pos': 'behind'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A large vase is behind a bottle on a wooden table.',
+        'prompt': 'A bus is behind a motorcycle at the bus stop.',
         'prompt_meta': {
-            'center': 'bottle',
-            'objects': [{'obj': 'vase', 'pos': 'behind'}],
+            'center': 'motorcycle',
+            'objects': [{'obj': 'bus', 'pos': 'behind'}],
+            'background': 'bus stop'
+        }
+    },
+    {
+        'prompt': 'A backpack is behind a teddy bear in the family room.',
+        'prompt_meta': {
+            'center': 'teddy bear',
+            'objects': [{'obj': 'backpack', 'pos': 'behind'}],
+            'background': 'family room'
+        }
+    },
+    {
+        'prompt': 'A dining table is behind a chair in the dining area.',
+        'prompt_meta': {
+            'center': 'chair',
+            'objects': [{'obj': 'dining table', 'pos': 'behind'}],
+            'background': 'dining area'
+        }
+    },
+    {
+        'prompt': 'A refrigerator is behind a cat in the kitchen.',
+        'prompt_meta': {
+            'center': 'cat',
+            'objects': [{'obj': 'refrigerator', 'pos': 'behind'}],
+            'background': 'kitchen'
+        }
+    },
+    {
+        'prompt': 'A toaster is behind a wine glass on the table.',
+        'prompt_meta': {
+            'center': 'wine glass',
+            'objects': [{'obj': 'toaster', 'pos': 'behind'}],
             'background': 'table'
         }
     },
     {
-        'prompt': 'A laptop is behind a cup on a desk in an office.',
+        'prompt': 'A suitcase is behind a donut in the hallway.',
         'prompt_meta': {
-            'center': 'cup',
-            'objects': [{'obj': 'laptop', 'pos': 'behind'}],
-            'background': 'office'
+            'center': 'donut',
+            'objects': [{'obj': 'suitcase', 'pos': 'behind'}],
+            'background': 'hallway'
         }
     },
     {
-        'prompt': 'A cow is behind a sheep in a meadow.',
+        'prompt': 'A person is behind a tie on a hanger.',
         'prompt_meta': {
-            'center': 'sheep',
-            'objects': [{'obj': 'cow', 'pos': 'behind'}],
-            'background': 'meadow'
+            'center': 'tie',
+            'objects': [{'obj': 'person', 'pos': 'behind'}],
+            'background': ''
         }
     },
     {
-        'prompt': 'A couch is behind a vase in the living room.',
+        'prompt': 'A bowl is behind an apple on the dining table.',
         'prompt_meta': {
-            'center': 'vase',
-            'objects': [{'obj': 'couch', 'pos': 'behind'}],
-            'background': 'living room'
+            'center': 'apple',
+            'objects': [{'obj': 'bowl', 'pos': 'behind'}],
+            'background': 'dining table'
         }
     },
     {
-        'prompt': 'A car is behind a cat in a garage.',
+        'prompt': 'A bus is behind a bicycle in the street.',
         'prompt_meta': {
-            'center': 'cat',
-            'objects': [{'obj': 'car', 'pos': 'behind'}],
-            'background': 'garage'
-        }
-    },
-    {
-        'prompt': 'A large boat is behind a small boat at the harbor.',
-        'prompt_meta': {
-            'center': 'boat',
-            'objects': [{'obj': 'boat', 'pos': 'behind'}],
-            'background': 'harbor'
-        }
-    },
-    {
-        'prompt': 'A laptop is behind a book on a school desk.',
-        'prompt_meta': {
-            'center': 'book',
-            'objects': [{'obj': 'laptop', 'pos': 'behind'}],
-            'background': 'desk'
-        }
-    },
-    {
-        'prompt': 'A large bench is behind a dog in the park.',
-        'prompt_meta': {
-            'center': 'dog',
-            'objects': [{'obj': 'bench', 'pos': 'behind'}],
+            'center': 'bicycle',
+            'objects': [{'obj': 'bus', 'pos': 'behind'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'A potted plant filled with flowers is behind a bird.',
+        'prompt': 'A vase is behind a orange on a shelf.',
         'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'potted plant', 'pos': 'behind'}],
-            'background': 'garden'
+            'center': 'clock',
+            'objects': [{'obj': 'orange', 'pos': 'behind'}],
+            'background': 'shelf'
         }
     },
     {
-        'prompt': 'A clock is behind a book on a nightstand.',
+        'prompt': 'A laptop is behind a mouse on a desk.',
         'prompt_meta': {
-            'center': 'book',
-            'objects': [{'obj': 'clock', 'pos': 'behind'}],
-            'background': 'nightstand'
-        }
-    },
-    {
-        'prompt': 'A large boat is behind a small boat in the ocean.',
-        'prompt_meta': {
-            'center': 'boat',
-            'objects': [{'obj': 'boat', 'pos': 'behind'}],
-            'background': 'ocean'
-        }
-    },
-    {
-        'prompt': 'A large couch is behind a remote in the living room.',
-        'prompt_meta': {
-            'center': 'remote',
-            'objects': [{'obj': 'couch', 'pos': 'behind'}],
-            'background': 'living room'
-        }
-    },
-    {
-        'prompt': 'A bicycle is behind a person at the playground.',
-        'prompt_meta': {
-            'center': 'person',
-            'objects': [{'obj': 'bicycle', 'pos': 'behind'}],
-            'background': 'playground'
+            'center': 'mouse',
+            'objects': [{'obj': 'laptop', 'pos': 'behind'}],
+            'background': 'desk'
         }
     }
 ]
 
 prompt_datas_left = [
     {
-        'prompt': 'A cat is to the left of a dog on a grassy field.',
+        'prompt': 'A dog is to the left of a person in the park.',
         'prompt_meta': {
-            'center': 'dog',
-            'objects': [{'obj': 'cat', 'pos': 'left'}],
-            'background': 'field'
+            'center': 'person',
+            'objects': [{'obj': 'dog', 'pos': 'left'}],
+            'background': 'park'
         }
     },
     {
-        'prompt': 'A book is to the left of a laptop on a desk.',
+        'prompt': 'A laptop is to the left of a cup on a desk.',
         'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'left'}],
+            'center': 'cup',
+            'objects': [{'obj': 'laptop', 'pos': 'left'}],
             'background': 'desk'
         }
     },
     {
-        'prompt': 'A fork is to the left of a spoon on a dining table.',
+        'prompt': 'A cat is to the left of a chair in the living room.',
         'prompt_meta': {
-            'center': 'spoon',
-            'objects': [{'obj': 'fork', 'pos': 'left'}],
-            'background': 'table'
+            'center': 'chair',
+            'objects': [{'obj': 'cat', 'pos': 'left'}],
+            'background': 'living room'
         }
     },
     {
-        'prompt': 'A cup is to the left of a bottle on a kitchen counter.',
+        'prompt': 'A vase is to the left of a book on the shelf.',
+        'prompt_meta': {
+            'center': 'book',
+            'objects': [{'obj': 'vase', 'pos': 'left'}],
+            'background': 'shelf'
+        }
+    },
+    {
+        'prompt': 'A wine glass is to the left of a bottle on the dining table.',
         'prompt_meta': {
             'center': 'bottle',
-            'objects': [{'obj': 'cup', 'pos': 'left'}],
-            'background': 'counter'
+            'objects': [{'obj': 'wine glass', 'pos': 'left'}],
+            'background': 'dining table'
         }
     },
     {
-        'prompt': 'A bird is to the left of a potted plant in a garden.',
-        'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'left'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A cell phone is to the left of a wallet on a table.',
-        'prompt_meta': {
-            'center': 'wallet',
-            'objects': [{'obj': 'cell phone', 'pos': 'left'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bottle is to the left of a vase on a mantelpiece.',
-        'prompt_meta': {
-            'center': 'vase',
-            'objects': [{'obj': 'bottle', 'pos': 'left'}],
-            'background': 'mantelpiece'
-        }
-    },
-    {
-        'prompt': 'A fork is to the left of a spoon on a dining table.',
+        'prompt': 'A fork is to the left of a spoon on the table.',
         'prompt_meta': {
             'center': 'spoon',
             'objects': [{'obj': 'fork', 'pos': 'left'}],
@@ -342,674 +294,690 @@ prompt_datas_left = [
         }
     },
     {
-        'prompt': 'A car is to the left of a airplane on a runway.',
+        'prompt': 'A car is to the left of a bus at the bus station.',
         'prompt_meta': {
-            'center': 'airplane',
+            'center': 'bus',
             'objects': [{'obj': 'car', 'pos': 'left'}],
-            'background': 'runway'
+            'background': 'bus station'
         }
     },
     {
-        'prompt': 'A mouse is to the left of a keyboard on a computer desk.',
+        'prompt': 'A bicycle is to the left of a motorcycle at the park entrance.',
         'prompt_meta': {
-            'center': 'keyboard',
+            'center': 'motorcycle',
+            'objects': [{'obj': 'bicycle', 'pos': 'left'}],
+            'background': 'park entrance'
+        }
+    },
+    {
+        'prompt': 'A teddy bear is to the left of a dog on the bed.',
+        'prompt_meta': {
+            'center': 'dog',
+            'objects': [{'obj': 'teddy bear', 'pos': 'left'}],
+            'background': 'bed'
+        }
+    },
+    {
+        'prompt': 'A bottle is to the left of a bowl on the kitchen counter.',
+        'prompt_meta': {
+            'center': 'bowl',
+            'objects': [{'obj': 'bottle', 'pos': 'left'}],
+            'background': 'kitchen counter'
+        }
+    },
+    {
+        'prompt': 'A mouse is to the left of a laptop on the desk.',
+        'prompt_meta': {
+            'center': 'laptop',
             'objects': [{'obj': 'mouse', 'pos': 'left'}],
             'background': 'desk'
         }
     },
     {
-        'prompt': 'A potted plant is to the left of a bottle on a garden table.',
+        'prompt': 'A clock is to the left of a tv in the living room.',
         'prompt_meta': {
-            'center': 'bottle',
-            'objects': [{'obj': 'potted plant', 'pos': 'left'}],
+            'center': 'tv',
+            'objects': [{'obj': 'clock', 'pos': 'left'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A bird is to the left of a potted plant on the balcony.',
+        'prompt_meta': {
+            'center': 'potted plant',
+            'objects': [{'obj': 'bird', 'pos': 'left'}],
+            'background': 'balcony'
+        }
+    },
+    {
+        'prompt': 'A skateboard is to the left of a bench at the park.',
+        'prompt_meta': {
+            'center': 'bench',
+            'objects': [{'obj': 'skateboard', 'pos': 'left'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'An apple is to the left of an orange on the table.',
+        'prompt_meta': {
+            'center': 'orange',
+            'objects': [{'obj': 'apple', 'pos': 'left'}],
             'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bicycle is to the left of a person on a sidewalk.',
-        'prompt_meta': {
-            'center': 'person',
-            'objects': [{'obj': 'bicycle', 'pos': 'left'}],
-            'background': 'sidewalk'
-        }
-    },
-    {
-        'prompt': 'A cup is to the left of a plate on a breakfast table.',
-        'prompt_meta': {
-            'center': 'plate',
-            'objects': [{'obj': 'cup', 'pos': 'left'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bottle is to the left of a wine glass on a sandy beach.',
-        'prompt_meta': {
-            'center': 'wine glass',
-            'objects': [{'obj': 'bottle', 'pos': 'left'}],
-            'background': 'beach'
-        }
-    },
-    {
-        'prompt': 'A book is to the left of a laptop on a study desk.',
-        'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'left'}],
-            'background': 'desk'
         }
     }
 ]
 
 prompt_datas_right = [
     {
-        'prompt': 'A cat is to the right of a dog on a grassy field.',
+        'prompt': 'A person is to the right of a dog in the park.',
         'prompt_meta': {
             'center': 'dog',
-            'objects': [{'obj': 'cat', 'pos': 'right'}],
-            'background': 'field'
+            'objects': [{'obj': 'person', 'pos': 'right'}],
+            'background': 'park'
         }
     },
     {
-        'prompt': 'A book is to the right of a laptop on a desk.',
+        'prompt': 'A cup is to the right of a laptop on a desk.',
         'prompt_meta': {
             'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'right'}],
+            'objects': [{'obj': 'cup', 'pos': 'right'}],
             'background': 'desk'
         }
     },
     {
-        'prompt': 'A fork is to the right of a spoon on a dining table.',
+        'prompt': 'A chair is to the right of a cat in the living room.',
         'prompt_meta': {
-            'center': 'spoon',
-            'objects': [{'obj': 'fork', 'pos': 'right'}],
-            'background': 'table'
+            'center': 'cat',
+            'objects': [{'obj': 'chair', 'pos': 'right'}],
+            'background': 'living room'
         }
     },
     {
-        'prompt': 'A cup is to the right of a bottle on a kitchen counter.',
-        'prompt_meta': {
-            'center': 'bottle',
-            'objects': [{'obj': 'cup', 'pos': 'right'}],
-            'background': 'counter'
-        }
-    },
-    {
-        'prompt': 'A bird is to the right of a potted plant in a garden.',
-        'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'right'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A cell phone is to the right of a wallet on a table.',
-        'prompt_meta': {
-            'center': 'wallet',
-            'objects': [{'obj': 'cell phone', 'pos': 'right'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bottle is to the right of a vase on a mantelpiece.',
+        'prompt': 'A book is to the right of a vase on the shelf.',
         'prompt_meta': {
             'center': 'vase',
-            'objects': [{'obj': 'bottle', 'pos': 'right'}],
-            'background': 'mantelpiece'
+            'objects': [{'obj': 'book', 'pos': 'right'}],
+            'background': 'shelf'
         }
     },
     {
-        'prompt': 'A fork is to the right of a spoon on a dining table.',
-        'prompt_meta': {
-            'center': 'spoon',
-            'objects': [{'obj': 'fork', 'pos': 'right'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A car is to the right of a airplane on a runway.',
-        'prompt_meta': {
-            'center': 'airplane',
-            'objects': [{'obj': 'car', 'pos': 'right'}],
-            'background': 'runway'
-        }
-    },
-    {
-        'prompt': 'A mouse is to the right of a keyboard on a computer desk.',
-        'prompt_meta': {
-            'center': 'keyboard',
-            'objects': [{'obj': 'mouse', 'pos': 'right'}],
-            'background': 'desk'
-        }
-    },
-    {
-        'prompt': 'A potted plant is to the right of a bottle on a garden table.',
-        'prompt_meta': {
-            'center': 'bottle',
-            'objects': [{'obj': 'potted plant', 'pos': 'right'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bicycle is to the right of a person on a sidewalk.',
-        'prompt_meta': {
-            'center': 'person',
-            'objects': [{'obj': 'bicycle', 'pos': 'right'}],
-            'background': 'sidewalk'
-        }
-    },
-    {
-        'prompt': 'A cup is to the right of a plate on a breakfast table.',
-        'prompt_meta': {
-            'center': 'plate',
-            'objects': [{'obj': 'cup', 'pos': 'right'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A bottle is to the right of a wine glass on a sandy beach.',
+        'prompt': 'A bottle is to the right of a wine glass on the dining table.',
         'prompt_meta': {
             'center': 'wine glass',
             'objects': [{'obj': 'bottle', 'pos': 'right'}],
-            'background': 'beach'
+            'background': 'dining table'
         }
     },
     {
-        'prompt': 'A book is to the right of a laptop on a study desk.',
+        'prompt': 'A spoon is to the right of a fork on the table.',
         'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'right'}],
+            'center': 'fork',
+            'objects': [{'obj': 'spoon', 'pos': 'right'}],
+            'background': 'table'
+        }
+    },
+    {
+        'prompt': 'A bus is to the right of a car at the bus station.',
+        'prompt_meta': {
+            'center': 'car',
+            'objects': [{'obj': 'bus', 'pos': 'right'}],
+            'background': 'bus station'
+        }
+    },
+    {
+        'prompt': 'A motorcycle is to the right of a bicycle at the park entrance.',
+        'prompt_meta': {
+            'center': 'bicycle',
+            'objects': [{'obj': 'motorcycle', 'pos': 'right'}],
+            'background': 'park entrance'
+        }
+    },
+    {
+        'prompt': 'A dog is to the right of a teddy bear on the bed.',
+        'prompt_meta': {
+            'center': 'teddy bear',
+            'objects': [{'obj': 'dog', 'pos': 'right'}],
+            'background': 'bed'
+        }
+    },
+    {
+        'prompt': 'A bowl is to the right of a bottle on the kitchen counter.',
+        'prompt_meta': {
+            'center': 'bottle',
+            'objects': [{'obj': 'bowl', 'pos': 'right'}],
+            'background': 'kitchen counter'
+        }
+    },
+    {
+        'prompt': 'A laptop is to the right of a mouse on the desk.',
+        'prompt_meta': {
+            'center': 'mouse',
+            'objects': [{'obj': 'laptop', 'pos': 'right'}],
             'background': 'desk'
+        }
+    },
+    {
+        'prompt': 'A tv is to the right of a clock in the living room.',
+        'prompt_meta': {
+            'center': 'clock',
+            'objects': [{'obj': 'tv', 'pos': 'right'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A potted plant is to the right of a bird on the balcony.',
+        'prompt_meta': {
+            'center': 'bird',
+            'objects': [{'obj': 'potted plant', 'pos': 'right'}],
+            'background': 'balcony'
+        }
+    },
+    {
+        'prompt': 'A bench is to the right of a skateboard at the park.',
+        'prompt_meta': {
+            'center': 'skateboard',
+            'objects': [{'obj': 'bench', 'pos': 'right'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'An orange is to the right of an apple on the table.',
+        'prompt_meta': {
+            'center': 'apple',
+            'objects': [{'obj': 'orange', 'pos': 'right'}],
+            'background': 'table'
         }
     }
 ]
 
 prompt_datas_on = [
     {
-        'prompt': 'A cat is on a large couch in the living room.',
+        'prompt': 'A book is on a dining table in the library.',
         'prompt_meta': {
-            'center': 'couch',
-            'objects': [{'obj': 'cat', 'pos': 'on'}],
-            'background': 'living room'
-        }
-    },
-    {
-        'prompt': 'A book is on a wooden table in the library.',
-        'prompt_meta': {
-            'center': 'table',
+            'center': 'dining table',
             'objects': [{'obj': 'book', 'pos': 'on'}],
             'background': 'library'
         }
     },
     {
-        'prompt': 'A glass of water is on a kitchen counter.',
+        'prompt': 'A cat is on a couch in the living room.',
         'prompt_meta': {
-            'center': 'counter',
-            'objects': [{'obj': 'wine glass', 'pos': 'on'}],
+            'center': 'couch',
+            'objects': [{'obj': 'cat', 'pos': 'on'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A cup is on a dining table in the office.',
+        'prompt_meta': {
+            'center': 'dining table',
+            'objects': [{'obj': 'cup', 'pos': 'on'}],
+            'background': 'office'
+        }
+    },
+    {
+        'prompt': 'A vase is on a dining table in the dining room.',
+        'prompt_meta': {
+            'center': 'dining table',
+            'objects': [{'obj': 'vase', 'pos': 'on'}],
+            'background': 'dining room'
+        }
+    },
+    {
+        'prompt': 'A vase is on a dining table in a room.',
+        'prompt_meta': {
+            'center': 'dining table',
+            'objects': [{'obj': 'vase', 'pos': 'on'}],
+            'background': 'room'
+        }
+    },
+    {
+        'prompt': 'A bowl is on a chair.',
+        'prompt_meta': {
+            'center': 'chair',
+            'objects': [{'obj': 'bowl', 'pos': 'on'}],
             'background': 'kitchen'
         }
     },
     {
-        'prompt': 'A small bird is on a potted plant in the garden.',
+        'prompt': 'A teddy bear is on a bed in the bedroom.',
         'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'on'}],
-            'background': 'garden'
+            'center': 'bed',
+            'objects': [{'obj': 'teddy bear', 'pos': 'on'}],
+            'background': 'bedroom'
         }
     },
     {
-        'prompt': 'A vase is on a dining table with a white tablecloth.',
+        'prompt': 'A teddy bear is on a suitcase in the office.',
         'prompt_meta': {
-            'center': 'dining table',
-            'objects': [{'obj': 'vase', 'pos': 'on'}],
-            'background': 'dining table'
+            'center': 'suitcase',
+            'objects': [{'obj': 'teddy bear', 'pos': 'on'}],
+            'background': 'office'
         }
     },
     {
-        'prompt': 'A bottle is on a large shelf in the living room.',
+        'prompt': 'A bicycle is on top of a bus in the street.',
         'prompt_meta': {
-            'center': 'shelf',
+            'center': 'bus',
+            'objects': [{'obj': 'bicycle', 'pos': 'on'}],
+            'background': 'street'
+        }
+    },
+    {
+        'prompt': 'A dog is on a bench in the park.',
+        'prompt_meta': {
+            'center': 'bench',
+            'objects': [{'obj': 'dog', 'pos': 'on'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A bottle is on a book in the living room.',
+        'prompt_meta': {
+            'center': 'book',
             'objects': [{'obj': 'bottle', 'pos': 'on'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A toy car is on a big couch in the playroom.',
+        'prompt': 'A sandwich is on a chair in the living room.',
+        'prompt_meta': {
+            'center': 'chair',
+            'objects': [{'obj': 'sandwich', 'pos': 'on'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A remote is on a couch in the family room.',
         'prompt_meta': {
             'center': 'couch',
-            'objects': [{'obj': 'toy car', 'pos': 'on'}],
-            'background': 'playroom'
+            'objects': [{'obj': 'remote', 'pos': 'on'}],
+            'background': 'family room'
         }
     },
     {
-        'prompt': 'A cup is on a saucer at the coffee shop.',
+        'prompt': 'A banana is on top of a car in the street.',
         'prompt_meta': {
-            'center': 'saucer',
-            'objects': [{'obj': 'cup', 'pos': 'on'}],
-            'background': 'coffee shop'
+            'center': 'car',
+            'objects': [{'obj': 'banana', 'pos': 'on'}],
+            'background': 'street'
         }
     },
     {
-        'prompt': 'A cat is on a park bench.',
+        'prompt': 'A sandwich is on a bowl in the cafeteria.',
         'prompt_meta': {
-            'center': 'bench',
-            'objects': [{'obj': 'cat', 'pos': 'on'}],
-            'background': 'park'
-        }
-    },
-    {
-        'prompt': 'A potted plant is on a balcony ledge.',
-        'prompt_meta': {
-            'center': 'balcony ledge',
-            'objects': [{'obj': 'potted plant', 'pos': 'on'}],
-            'background': 'balcony'
-        }
-    },
-    {
-        'prompt': 'A dog is on a large rock in the wilderness.',
-        'prompt_meta': {
-            'center': 'rock',
-            'objects': [{'obj': 'dog', 'pos': 'on'}],
-            'background': 'wilderness'
-        }
-    },
-    {
-        'prompt': 'A pencil is on a book in the study room.',
-        'prompt_meta': {
-            'center': 'book',
-            'objects': [{'obj': 'pencil', 'pos': 'on'}],
-            'background': 'study room'
-        }
-    },
-    {
-        'prompt': 'A laptop is on a wooden desk in the office.',
-        'prompt_meta': {
-            'center': 'desk',
-            'objects': [{'obj': 'laptop', 'pos': 'on'}],
-            'background': 'office'
-        }
-    },
-    {
-        'prompt': 'A bird is on a large potted plant in the garden.',
-        'prompt_meta': {
-            'center': 'potted plant',
-            'objects': [{'obj': 'bird', 'pos': 'on'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A wine glass is on a coaster on the coffee table.',
-        'prompt_meta': {
-            'center': 'coaster',
-            'objects': [{'obj': 'wine glass', 'pos': 'on'}],
-            'background': 'coffee table'
+            'center': 'bowl',
+            'objects': [{'obj': 'sandwich', 'pos': 'on'}],
+            'background': 'cafeteria'
         }
     }
 ]
 
 prompt_datas_under = [
     {
-        'prompt': 'A large couch is under a cat in the living room.',
+        'prompt': 'A suitcase is under a hot dog in the living room.',
         'prompt_meta': {
-            'center': 'cat',
-            'objects': [{'obj': 'couch', 'pos': 'under'}],
+            'center': 'suitcase',
+            'objects': [{'obj': 'hot dog', 'pos': 'under'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A wooden table is under a book in the library.',
-        'prompt_meta': {
-            'center': 'book',
-            'objects': [{'obj': 'table', 'pos': 'under'}],
-            'background': 'library'
-        }
-    },
-    {
-        'prompt': 'A kitchen counter is under a wine glass.',
-        'prompt_meta': {
-            'center': 'wine glass',
-            'objects': [{'obj': 'counter', 'pos': 'under'}],
-            'background': 'kitchen'
-        }
-    },
-    {
-        'prompt': 'A potted plant is under a small bird in the garden.',
-        'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'potted plant', 'pos': 'under'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A dining table with a white tablecloth is under a vase.',
-        'prompt_meta': {
-            'center': 'vase',
-            'objects': [{'obj': 'dining table', 'pos': 'under'}],
-            'background': 'dining table'
-        }
-    },
-    {
-        'prompt': 'A large shelf is under a bottle in the living room.',
-        'prompt_meta': {
-            'center': 'bottle',
-            'objects': [{'obj': 'shelf', 'pos': 'under'}],
-            'background': 'living room'
-        }
-    },
-    {
-        'prompt': 'A big couch is under a toy car in the playroom.',
-        'prompt_meta': {
-            'center': 'toy car',
-            'objects': [{'obj': 'couch', 'pos': 'under'}],
-            'background': 'playroom'
-        }
-    },
-    {
-        'prompt': 'A saucer is under a cup at the coffee shop.',
+        'prompt': 'A microwave is under a cup in the family room.',
         'prompt_meta': {
             'center': 'cup',
-            'objects': [{'obj': 'saucer', 'pos': 'under'}],
-            'background': 'coffee shop'
+            'objects': [{'obj': 'microwave', 'pos': 'under'}],
+            'background': 'family room'
         }
     },
     {
-        'prompt': 'A park bench is under a cat.',
+        'prompt': 'A car is under a banana in the park.',
         'prompt_meta': {
-            'center': 'cat',
-            'objects': [{'obj': 'bench', 'pos': 'under'}],
+            'center': 'banana',
+            'objects': [{'obj': 'car', 'pos': 'under'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'A balcony ledge is under a potted plant.',
+        'prompt': 'A book is under a wine glass in the garage.',
+        'prompt_meta': {
+            'center': 'wine glass',
+            'objects': [{'obj': 'book', 'pos': 'under'}],
+            'background': 'garage'
+        }
+    },
+    {
+        'prompt': 'A oven is under a cake in the bedroom.',
+        'prompt_meta': {
+            'center': 'cake',
+            'objects': [{'obj': 'oven', 'pos': 'under'}],
+            'background': 'bedroom'
+        }
+    },
+    {
+        'prompt': 'A suitcase is under a cake in the hallway.',
+        'prompt_meta': {
+            'center': 'cake',
+            'objects': [{'obj': 'suitcase', 'pos': 'under'}],
+            'background': 'hallway'
+        }
+    },
+    {
+        'prompt': 'A couch is under a laptop in the living room.',
+        'prompt_meta': {
+            'center': 'laptop',
+            'objects': [{'obj': 'couch', 'pos': 'under'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A cow is under a broccoli in a park.',
+        'prompt_meta': {
+            'center': 'broccoli',
+            'objects': [{'obj': 'cow', 'pos': 'under'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A oven is under a cake in the kitchen.',
+        'prompt_meta': {
+            'center': 'cake',
+            'objects': [{'obj': 'oven', 'pos': 'under'}],
+            'background': 'kitchen'
+        }
+    },
+    {
+        'prompt': 'A bench is under a vase in the hallway.',
+        'prompt_meta': {
+            'center': 'bench',
+            'objects': [{'obj': 'vase', 'pos': 'under'}],
+            'background': 'hallway'
+        }
+    },
+    {
+        'prompt': 'A suitcase is under a potted plant on the balcony.',
         'prompt_meta': {
             'center': 'potted plant',
-            'objects': [{'obj': 'balcony ledge', 'pos': 'under'}],
+            'objects': [{'obj': 'suitcase', 'pos': 'under'}],
             'background': 'balcony'
         }
     },
     {
-        'prompt': 'A large rock is under a dog in the wilderness.',
+        'prompt': 'A chair is under an apple on the desk.',
         'prompt_meta': {
-            'center': 'dog',
-            'objects': [{'obj': 'rock', 'pos': 'under'}],
-            'background': 'wilderness'
+            'center': 'apple',
+            'objects': [{'obj': 'chair', 'pos': 'under'}],
+            'background': 'desk'
         }
     },
     {
-        'prompt': 'A book is under a pencil in the study room.',
+        'prompt': 'A horse is under a person in the park.',
         'prompt_meta': {
-            'center': 'pencil',
-            'objects': [{'obj': 'book', 'pos': 'under'}],
-            'background': 'study room'
+            'center': 'person',
+            'objects': [{'obj': 'horse', 'pos': 'under'}],
+            'background': 'park'
         }
     },
     {
-        'prompt': 'A wooden desk is under a laptop in the office.',
+        'prompt': 'A chair is under a potted plant in the garden.',
         'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'desk', 'pos': 'under'}],
-            'background': 'office'
-        }
-    },
-    {
-        'prompt': 'A large potted plant is under a bird in the garden.',
-        'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'potted plant', 'pos': 'under'}],
+            'center': 'potted plant',
+            'objects': [{'obj': 'chair', 'pos': 'under'}],
             'background': 'garden'
         }
     },
     {
-        'prompt': 'A coaster is under a wine glass on the coffee table.',
+        'prompt': 'A microwave is under a wine glass in the kitchen.',
         'prompt_meta': {
             'center': 'wine glass',
-            'objects': [{'obj': 'coaster', 'pos': 'under'}],
-            'background': 'coffee table'
+            'objects': [{'obj': 'microwave', 'pos': 'under'}],
+            'background': 'kitchen'
         }
     }
 ]
 
 prompt_datas_above = [
     {
-        'prompt': 'A bird is above a dog in the meadow.',
+        'prompt': 'A clock is above a tv in the living room.',
         'prompt_meta': {
-            'center': 'dog',
-            'objects': [{'obj': 'bird', 'pos': 'above'}],
-            'background': 'meadow'
-        }
-    },
-    {
-        'prompt': 'A airplane is above a person in the living room.',
-        'prompt_meta': {
-            'center': 'person',
-            'objects': [{'obj': 'airplane', 'pos': 'above'}],
+            'center': 'tv',
+            'objects': [{'obj': 'clock', 'pos': 'above'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A kite is above a tree in the park.',
+        'prompt': 'A bird is above a bench in the park.',
         'prompt_meta': {
-            'center': 'tree',
-            'objects': [{'obj': 'kite', 'pos': 'above'}],
+            'center': 'bench',
+            'objects': [{'obj': 'bird', 'pos': 'above'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'An airplane is above a boat in the ocean.',
+        'prompt': 'A fork is above a spoon in the dining room.',
         'prompt_meta': {
-            'center': 'boat',
-            'objects': [{'obj': 'airplane', 'pos': 'above'}],
-            'background': 'ocean'
+            'center': 'spoon',
+            'objects': [{'obj': 'fork', 'pos': 'above'}],
+            'background': 'dining room'
         }
     },
     {
-        'prompt': 'A wine glass is above a dining table.',
+        'prompt': 'A tv is above a couch in the living room.',
+        'prompt_meta': {
+            'center': 'couch',
+            'objects': [{'obj': 'tv', 'pos': 'above'}],
+            'background': 'living room'
+        }
+    },
+    {
+        'prompt': 'A bird is above a dining table in the study room.',
         'prompt_meta': {
             'center': 'dining table',
-            'objects': [{'obj': 'wine glass', 'pos': 'above'}],
-            'background': 'table'
-        }
-    },
-    {
-        'prompt': 'A cloud is above a mountain in the distance.',
-        'prompt_meta': {
-            'center': 'mountain',
-            'objects': [{'obj': 'cloud', 'pos': 'above'}],
-            'background': 'distance'
-        }
-    },
-    {
-        'prompt': 'A kite is above a tree in a field.',
-        'prompt_meta': {
-            'center': 'tree',
-            'objects': [{'obj': 'kite', 'pos': 'above'}],
-            'background': 'field'
-        }
-    },
-    {
-        'prompt': 'A bird is above a potted plant in the garden.',
-        'prompt_meta': {
-            'center': 'potted plant',
             'objects': [{'obj': 'bird', 'pos': 'above'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A shelf is above a desk in a study room.',
-        'prompt_meta': {
-            'center': 'desk',
-            'objects': [{'obj': 'shelf', 'pos': 'above'}],
             'background': 'study room'
         }
     },
     {
-        'prompt': 'A clock is above a mirror on the wall.',
+        'prompt': 'A clock is above a sandwich in the bedroom.',
         'prompt_meta': {
-            'center': 'mirror',
+            'center': 'sandwich',
             'objects': [{'obj': 'clock', 'pos': 'above'}],
-            'background': 'wall'
+            'background': 'bedroom'
         }
     },
     {
-        'prompt': 'A bird is above a boat on the water.',
+        'prompt': 'A bird is above a car in the parking lot.',
         'prompt_meta': {
-            'center': 'boat',
+            'center': 'car',
             'objects': [{'obj': 'bird', 'pos': 'above'}],
-            'background': 'water'
+            'background': 'parking lot'
         }
     },
     {
-        'prompt': 'A book is above a laptop on the shelf.',
+        'prompt': 'A clock is above a dog in the living room.',
         'prompt_meta': {
-            'center': 'laptop',
-            'objects': [{'obj': 'book', 'pos': 'above'}],
-            'background': 'shelf'
+            'center': 'dog',
+            'objects': [{'obj': 'clock', 'pos': 'above'}],
+            'background': 'living room'
         }
     },
     {
-      'prompt': 'A wine glass is above a plate on a drying rack.',
-      'prompt_meta': {
-        'center': 'plate',
-        'objects': [{'obj': 'wine glass', 'pos': 'above'}],
-        'background': 'drying rack'
-      }
-    },
-    {
-        'prompt': 'A leaf is above a rock in the garden.',
+        'prompt': 'A kite is above a potted plant in the yard.',
         'prompt_meta': {
-            'center': 'rock',
-            'objects': [{'obj': 'leaf', 'pos': 'above'}],
-            'background': 'garden'
+            'center': 'potted plant',
+            'objects': [{'obj': 'kite', 'pos': 'above'}],
+            'background': 'yard'
         }
     },
     {
-        'prompt': 'A airplane is above a cloud in the night sky.',
+        'prompt': 'A bird is above a potted plant in the park.',
         'prompt_meta': {
-            'center': 'cloud',
-            'objects': [{'obj': 'airplane', 'pos': 'above'}],
-            'background': 'night sky'
+            'center': 'potted plant',
+            'objects': [{'obj': 'bird', 'pos': 'above'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A donut is above a hot dog in the bakery.',
+        'prompt_meta': {
+            'center': 'hot dog',
+            'objects': [{'obj': 'donut', 'pos': 'above'}],
+            'background': 'desk'
+        }
+    },
+    {
+        'prompt': 'A frisbee is above a cat in a park.',
+        'prompt_meta': {
+            'center': 'cat',
+            'objects': [{'obj': 'frisbee', 'pos': 'above'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A sports ball is above a dog in a parl.',
+        'prompt_meta': {
+            'center': 'dining table',
+            'objects': [{'obj': 'sports ball', 'pos': 'above'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A orange is above an apple in the yard.',
+        'prompt_meta': {
+            'center': 'apple',
+            'objects': [{'obj': 'orange', 'pos': 'above'}],
+            'background': 'yard'
+        }
+    },
+    {
+        'prompt': 'A tv is above a couch in the family room.',
+        'prompt_meta': {
+            'center': 'couch',
+            'objects': [{'obj': 'tv', 'pos': 'above'}],
+            'background': 'family room'
         }
     }
 ]
 
 prompt_datas_below = [
     {
-        'prompt': 'A dog is below a bird in the meadow.',
+        'prompt': 'A tv is below a clock in the living room.',
         'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'dog', 'pos': 'below'}],
-            'background': 'meadow'
-        }
-    },
-    {
-        'prompt': 'A person is below an airplane in the living room.',
-        'prompt_meta': {
-            'center': 'airplane',
-            'objects': [{'obj': 'person', 'pos': 'below'}],
+            'center': 'clock',
+            'objects': [{'obj': 'tv', 'pos': 'below'}],
             'background': 'living room'
         }
     },
     {
-        'prompt': 'A tree is below a kite in the park.',
+        'prompt': 'A bench is below a bird in the park.',
         'prompt_meta': {
-            'center': 'kite',
-            'objects': [{'obj': 'tree', 'pos': 'below'}],
+            'center': 'bird',
+            'objects': [{'obj': 'bench', 'pos': 'below'}],
             'background': 'park'
         }
     },
     {
-        'prompt': 'A boat is below an airplane in the ocean.',
+        'prompt': 'A apple is below a dining table in the dining room.',
         'prompt_meta': {
-            'center': 'airplane',
-            'objects': [{'obj': 'boat', 'pos': 'below'}],
-            'background': 'ocean'
+            'center': 'dining table',
+            'objects': [{'obj': 'apple', 'pos': 'below'}],
+            'background': 'dining room'
         }
     },
     {
-        'prompt': 'A dining table is below a wine glass on a table.',
+        'prompt': 'A couch is below a tv in the living room.',
         'prompt_meta': {
-            'center': 'wine glass',
-            'objects': [{'obj': 'dining table', 'pos': 'below'}],
-            'background': 'table'
+            'center': 'tv',
+            'objects': [{'obj': 'couch', 'pos': 'below'}],
+            'background': 'living room'
         }
     },
     {
-        'prompt': 'A mountain is below a cloud in the distance.',
+        'prompt': 'A apple is below a frisbee on the grass.',
         'prompt_meta': {
-            'center': 'cloud',
-            'objects': [{'obj': 'mountain', 'pos': 'below'}],
-            'background': 'distance'
+            'center': 'frisbee',
+            'objects': [{'obj': 'apple', 'pos': 'below'}],
+            'background': 'grass'
         }
     },
     {
-        'prompt': 'A tree is below a kite in a field.',
-        'prompt_meta': {
-            'center': 'kite',
-            'objects': [{'obj': 'tree', 'pos': 'below'}],
-            'background': 'field'
-        }
-    },
-    {
-        'prompt': 'A potted plant is below a bird in the garden.',
-        'prompt_meta': {
-            'center': 'bird',
-            'objects': [{'obj': 'potted plant', 'pos': 'below'}],
-            'background': 'garden'
-        }
-    },
-    {
-        'prompt': 'A desk is below a shelf in a study room.',
-        'prompt_meta': {
-            'center': 'shelf',
-            'objects': [{'obj': 'desk', 'pos': 'below'}],
-            'background': 'study room'
-        }
-    },
-    {
-        'prompt': 'A mirror is below a clock on the wall.',
+        'prompt': 'A teddy bear is below a clock in the bedroom.',
         'prompt_meta': {
             'center': 'clock',
-            'objects': [{'obj': 'mirror', 'pos': 'below'}],
-            'background': 'wall'
+            'objects': [{'obj': 'teddy bear', 'pos': 'below'}],
+            'background': 'bedroom'
         }
     },
     {
-        'prompt': 'A boat is below a bird on the water.',
+        'prompt': 'A car is below a bird in the parking lot.',
         'prompt_meta': {
             'center': 'bird',
-            'objects': [{'obj': 'boat', 'pos': 'below'}],
-            'background': 'water'
+            'objects': [{'obj': 'car', 'pos': 'below'}],
+            'background': 'parking lot'
         }
     },
     {
-        'prompt': 'A laptop is below a book on the shelf.',
+        'prompt': 'A dog is below a clock in the living room.',
         'prompt_meta': {
-            'center': 'book',
-            'objects': [{'obj': 'laptop', 'pos': 'below'}],
-            'background': 'shelf'
+            'center': 'clock',
+            'objects': [{'obj': 'dog', 'pos': 'below'}],
+            'background': 'living room'
         }
     },
     {
-      'prompt': 'A plate is below a wine glass on a drying rack.',
-      'prompt_meta': {
-        'center': 'wine glass',
-        'objects': [{'obj': 'plate', 'pos': 'below'}],
-        'background': 'drying rack'
-      }
-    },
-    {
-        'prompt': 'A rock is below a leaf in the garden.',
+        'prompt': 'A potted plant is below a kite in the yard.',
         'prompt_meta': {
-            'center': 'leaf',
-            'objects': [{'obj': 'rock', 'pos': 'below'}],
-            'background': 'garden'
+            'center': 'kite',
+            'objects': [{'obj': 'potted plant', 'pos': 'below'}],
+            'background': 'yard'
         }
     },
     {
-        'prompt': 'A cloud is below an airplane in the night sky.',
+        'prompt': 'An apple is below a bird in the park.',
         'prompt_meta': {
-            'center': 'airplane',
-            'objects': [{'obj': 'cloud', 'pos': 'below'}],
-            'background': 'night sky'
+            'center': 'bird',
+            'objects': [{'obj': 'apple', 'pos': 'below'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A kite is below a potted plant in the park.',
+        'prompt_meta': {
+            'center': 'potted plant',
+            'objects': [{'obj': 'kite', 'pos': 'below'}],
+            'background': 'desk'
+        }
+    },
+    {
+        'prompt': 'A cat is below a frisbee in a park.',
+        'prompt_meta': {
+            'center': 'frisbee',
+            'objects': [{'obj': 'cat', 'pos': 'below'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A dog is below a sports ball in a park.',
+        'prompt_meta': {
+            'center': 'sports ball',
+            'objects': [{'obj': 'dog', 'pos': 'below'}],
+            'background': 'park'
+        }
+    },
+    {
+        'prompt': 'A cat is below a bird in the yard.',
+        'prompt_meta': {
+            'center': 'bird',
+            'objects': [{'obj': 'cat', 'pos': 'below'}],
+            'background': 'yard'
+        }
+    },
+    {
+        'prompt': 'An apple is below a clock in the living room.',
+        'prompt_meta': {
+            'center': 'clock',
+            'objects': [{'obj': 'apple', 'pos': 'below'}],
+            'background': 'living room'
         }
     }
 ]
