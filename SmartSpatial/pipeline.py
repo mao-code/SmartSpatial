@@ -456,9 +456,9 @@ class SmartSpatialPipeline():
             obj_name = bbox_data['caption']
             objects.append(obj_name)
 
-        if obj_name in prompt:
-            objects_in_prompt.append(obj_name)
-            bboxes_in_prompt.append(bboxes[idx])
+            if obj_name in prompt:
+                objects_in_prompt.append(obj_name)
+                bboxes_in_prompt.append(bboxes[idx])
 
 
         position = ""
