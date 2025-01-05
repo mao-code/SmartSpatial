@@ -1,13 +1,12 @@
 from transformers import pipeline, CLIPTextModel, CLIPTokenizer
-from ..my_model import controlnet, unet_2d_condition
+from my_model import controlnet, unet_2d_condition
 from diffusers import DDIMScheduler, AutoencoderKL, LMSDiscreteScheduler
-from diffusers.models.controlnet import ControlNetModel
 import json
 
 import numpy as np
 from PIL import Image
 
-from utils import (
+from SmartSpatial.utils import (
     pil_to_numpy, 
     numpy_to_pt, 
     save_to_pkl, 
@@ -15,7 +14,7 @@ from utils import (
     visualize_attention_maps,
     convert_bbox_data
 )
-from ..utils import Pharse2idx, sentence_to_list, draw_box, setup_logger
+from utils import Pharse2idx, sentence_to_list, draw_box, setup_logger
 import torch
 import os
 from omegaconf import OmegaConf
@@ -26,7 +25,10 @@ class SmartSpatialPipeline():
         self.cfg = cfg
         self.device = device
         
-        self.depth_estimator = pipeline(cfg.depth_estimatior.type, model=cfg.depth_estimatior.path)
+        self.depth_estimator = pipeline(
+            cfg.general.depth_estimator.type, 
+            model=cfg.general.depth_estimator.path
+        )
 
         with open(cfg.general.unet_config) as f:
             unet_config = json.load(f)
