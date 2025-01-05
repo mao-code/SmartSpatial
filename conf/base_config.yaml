@@ -4,6 +4,9 @@ general:
   unet_config: './conf/unet/config.json'
   real_image_editing: False
   controlnet_path: 'lllyasviel/sd-controlnet-depth'
+  depth_estimator: 
+    type: 'depth-estimation'
+    path: 'Intel/dpt-large'
 
 inference:
   loss_scale: 30
