@@ -89,7 +89,9 @@ class SmartSpatialPipeline():
         prompt_data=None,
         obj_set=None,
         bg_set=None,
-        bbox_ref_mapping=None
+        bbox_ref_mapping=None,
+
+        is_random_seed=False
     ):
         logger.info("Inference")
         logger.info(f"Prompt: {prompt}")
@@ -120,7 +122,9 @@ class SmartSpatialPipeline():
 
         cond_embeddings = self.text_encoder(input_ids.input_ids.to(self.device))[0]
         text_embeddings = torch.cat([uncond_embeddings, cond_embeddings])
-        generator = torch.manual_seed(self.cfg.inference.rand_seed)
+
+        if is_random_seed:
+            generator = torch.manual_seed(self.cfg.inference.rand_seed)
 
         # noise_scheduler = LMSDiscreteScheduler(
         #     beta_start=cfg.noise_schedule.beta_start,
@@ -431,7 +435,8 @@ class SmartSpatialPipeline():
         bg_set=None,
         bbox_ref_mapping=None,
 
-        is_process_bbox_data=True
+        is_process_bbox_data=True,
+        is_random_seed=False
     ):
 
         # ------------------ example input ------------------
@@ -524,7 +529,9 @@ class SmartSpatialPipeline():
             prompt_data=prompt_data,
             obj_set=obj_set,
             bg_set=bg_set,
-            bbox_ref_mapping=bbox_ref_mapping
+            bbox_ref_mapping=bbox_ref_mapping,
+            
+            is_random_seed=is_random_seed
         )
 
         if is_save_images:

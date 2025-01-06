@@ -84,7 +84,8 @@ def main():
                     is_used_momentum=True,
                     momentum=0.5,
 
-                    is_process_bbox_data=False
+                    is_process_bbox_data=False,
+                    is_random_seed=False
                 )
 
                 img[0].save(impath)
