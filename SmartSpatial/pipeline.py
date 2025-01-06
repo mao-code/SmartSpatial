@@ -72,6 +72,7 @@ class SmartSpatialPipeline():
 
         logger,
 
+        is_save_attn_maps=False,
         save_path="output",
 
         is_used_attention_guide=True,
@@ -265,13 +266,14 @@ class SmartSpatialPipeline():
                     iterations_each_step.append(iteration)
                     losses_each_step.append(losses_each_iteration)
 
-                if index % 10 == 0:
+                if is_save_attn_maps and index % 10 == 0:
                     # Visualize the attention map
                     visualize_attention_maps(
                         attention_maps=attn_map_integrated_mid,
                         prompt=prompt,
                         object_positions=object_positions,
                         timestep=index,
+                        is_save_attn_maps=is_save_attn_maps,
                         save_path=f"{save_path}/attention_maps_mid",
                         is_all_tokens=False
                     )
@@ -281,6 +283,7 @@ class SmartSpatialPipeline():
                         prompt=prompt,
                         object_positions=object_positions,
                         timestep=index,
+                        is_save_attn_maps=is_save_attn_maps,
                         save_path=f"{save_path}/attention_maps_up",
                         is_all_tokens=False
                     )
@@ -291,6 +294,7 @@ class SmartSpatialPipeline():
                         #     prompt=prompt,
                         #     object_positions=object_positions,
                         #     timestep=index,
+                        #     is_save_attn_maps=is_save_attn_maps,
                         #     save_path=f"{save_path}/attention_maps_down_control",
                         #     is_all_tokens=False
                         # )
@@ -300,6 +304,7 @@ class SmartSpatialPipeline():
                             prompt=prompt,
                             object_positions=object_positions,
                             timestep=index,
+                            is_save_attn_maps=is_save_attn_maps,
                             save_path=f"{save_path}/attention_maps_mid_control",
                             is_all_tokens=False
                         )
@@ -358,13 +363,14 @@ class SmartSpatialPipeline():
                 latents = noise_scheduler.step(noise_pred, t, latents).prev_sample
                 torch.cuda.empty_cache()
 
-                if not is_used_attention_guide and index % 10 == 0:
+                if is_save_attn_maps and not is_used_attention_guide and index % 10 == 0:
                     # Visualize the attention map without guidance
                     visualize_attention_maps(
                         attention_maps=attn_map_integrated_mid,
                         prompt=prompt,
                         object_positions=object_positions,
                         timestep=index,
+                        is_save_attn_maps=is_save_attn_maps,
                         save_path=f"{save_path}/attention_maps_mid",
                         is_all_tokens=False
                     )
@@ -374,6 +380,7 @@ class SmartSpatialPipeline():
                         prompt=prompt,
                         object_positions=object_positions,
                         timestep=index,
+                        is_save_attn_maps=is_save_attn_maps,
                         save_path=f"{save_path}/attention_maps_up",
                         is_all_tokens=False
                     )
@@ -405,6 +412,7 @@ class SmartSpatialPipeline():
         bbox_datas,
 
         is_save_images=False,
+        is_save_attn_maps=False,
         save_path="output",
 
         is_used_attention_guide=True,
@@ -499,6 +507,7 @@ class SmartSpatialPipeline():
 
             logger,
 
+            is_save_attn_maps=is_save_attn_maps,
             save_path=save_path,
 
             is_used_attention_guide=is_used_attention_guide,

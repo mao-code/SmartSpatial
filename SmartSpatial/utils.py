@@ -194,6 +194,7 @@ def visualize_attention_maps(
     prompt,
     object_positions,
     timestep,
+    is_save_attn_maps=False,
     save_path="",
     is_all_tokens=True
 ):
@@ -245,19 +246,21 @@ def visualize_attention_maps(
           plt.axis('off')  # Optionally, you can remove the axis ticks and labels
 
           # Save the figure
-          plt.savefig(token_save_path)
+          if is_save_attn_maps:
+            plt.savefig(token_save_path)
           plt.close()
           # print(f'Attention map for token "{token}" (index: {idx}) saved at: {token_save_path}')
 
           # Upscaling attention map
-          upscale_and_save_attention_map(
-              attn_prob_array,
-              prompt,
-              token,
-              timestep,
-              target_size=(512, 512),
-              save_dir=f"{save_path}_upscale"
-          )
+          if is_save_attn_maps:
+            upscale_and_save_attention_map(
+                attn_prob_array,
+                prompt,
+                token,
+                timestep,
+                target_size=(512, 512),
+                save_dir=f"{save_path}_upscale"
+            )
 
     else:
       # Loop through each token index in object_positions
@@ -290,19 +293,21 @@ def visualize_attention_maps(
               plt.axis('off')  # Optionally, you can remove the axis ticks and labels
 
               # Save the figure
-              plt.savefig(token_save_path)
+              if is_save_attn_maps:
+                plt.savefig(token_save_path)
               plt.close()
               # print(f'Attention map for token "{token}" (index: {token_idx}) saved at: {token_save_path}')
 
           # Upscaling attention map
-          upscale_and_save_attention_map(
-              attn_prob_array,
-              prompt,
-              token,
-              timestep,
-              target_size=(512, 512),
-              save_dir=f"{save_path}_upscale"
-          )
+          if is_save_attn_maps:
+            upscale_and_save_attention_map(
+                attn_prob_array,
+                prompt,
+                token,
+                timestep,
+                target_size=(512, 512),
+                save_dir=f"{save_path}_upscale"
+            )
 
     # Example usage:
     # Assuming attention_map is the (b, H*W, num_tokens) attention map from the model

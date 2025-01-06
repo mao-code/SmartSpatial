@@ -79,7 +79,7 @@ def main():
 
                     is_used_controlnet=True,
                     control_image=depth_map,
-                    controlnet_scale=0.5,
+                    controlnet_scale=0.2,
 
                     is_used_momentum=True,
                     momentum=0.5,
