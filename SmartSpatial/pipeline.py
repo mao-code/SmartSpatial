@@ -126,6 +126,8 @@ class SmartSpatialPipeline():
 
         if is_random_seed:
             generator = torch.manual_seed(self.cfg.inference.rand_seed)
+        else:
+            generator = None
 
         # noise_scheduler = LMSDiscreteScheduler(
         #     beta_start=cfg.noise_schedule.beta_start,
