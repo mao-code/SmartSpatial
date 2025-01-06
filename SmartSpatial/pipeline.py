@@ -73,6 +73,7 @@ class SmartSpatialPipeline():
         logger,
 
         is_save_attn_maps=False,
+        is_save_losses=False,
         save_path="output",
 
         is_used_attention_guide=True,
@@ -180,10 +181,10 @@ class SmartSpatialPipeline():
                 v = torch.zeros_like(latents)
 
                 # Guidance
-                # loss_threshold = cfg.inference.loss_threshold
-                loss_threshold = 0.5
-                # max_iter = cfg.inference.max_iter
-                max_iter = 5
+                loss_threshold = self.cfg.inference.loss_threshold
+                # loss_threshold = 0.5
+                max_iter = self.cfg.inference.max_iter
+                # max_iter = 5
                 # while loss.item() / cfg.inference.loss_scale > cfg.inference.loss_threshold and iteration < cfg.inference.max_iter and index < cfg.inference.max_index_step:
                 while loss.item() / self.cfg.inference.loss_scale > loss_threshold and iteration < max_iter:
                     # print(f"Timestep: {index}, iteration: {iteration+1}-------------")
@@ -394,8 +395,9 @@ class SmartSpatialPipeline():
             logger.info(f"\nFirst Loss: {losses_each_step[0][0]}")
             logger.info(f"Last Loss: {losses_each_step[-1][-1]}")
 
-            save_to_pkl(losses_each_step, f"{save_path}/losses.pkl")
-            save_to_pkl(iterations_each_step, f"{save_path}/iterations.pkl")
+            if is_save_losses:
+                save_to_pkl(losses_each_step, f"{save_path}/losses.pkl")
+                save_to_pkl(iterations_each_step, f"{save_path}/iterations.pkl")
 
         # Decode to pixel space
         with torch.no_grad():
@@ -417,6 +419,7 @@ class SmartSpatialPipeline():
 
         is_save_images=False,
         is_save_attn_maps=False,
+        is_save_losses=False,
         save_path="output",
 
         is_used_attention_guide=True,
@@ -513,6 +516,7 @@ class SmartSpatialPipeline():
             logger,
 
             is_save_attn_maps=is_save_attn_maps,
+            is_save_losses=is_save_losses,
             save_path=save_path,
 
             is_used_attention_guide=is_used_attention_guide,
@@ -530,7 +534,7 @@ class SmartSpatialPipeline():
             obj_set=obj_set,
             bg_set=bg_set,
             bbox_ref_mapping=bbox_ref_mapping,
-            
+
             is_random_seed=is_random_seed
         )
 

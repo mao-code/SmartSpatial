@@ -73,6 +73,7 @@ def main():
                     bbox_datas=bbox_datas,
 
                     is_save_images=False,
+                    is_save_losses=False,
                     save_path=save_path,
 
                     is_used_attention_guide=True,
