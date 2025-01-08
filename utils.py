@@ -42,6 +42,10 @@ bbox_ref_mapping = {
     ]
 }
 
+def load_image(image_path):
+    """Load image from file."""
+    return Image.open(image_path)
+
 def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
     loss = 0
     object_number = len(bboxes)

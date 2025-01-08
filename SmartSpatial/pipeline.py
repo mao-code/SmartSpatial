@@ -81,7 +81,7 @@ class SmartSpatialPipeline():
         is_used_controlnet=False,
         is_used_controlnet_term=False,
         control_image=None,
-        controlnet_scale = 1.0,
+        controlnet_scale = 0.2,
 
         is_used_momentum=False,
         momentum = 0.5,
@@ -429,7 +429,7 @@ class SmartSpatialPipeline():
         is_used_controlnet=False,
         is_used_controlnet_term=False,
         control_image=None,
-        controlnet_scale = 1.0,
+        controlnet_scale = 0.2,
 
         is_used_momentum=False,
         momentum = 0.5,

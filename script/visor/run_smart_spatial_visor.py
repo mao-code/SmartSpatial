@@ -79,6 +79,7 @@ def main():
                     is_used_attention_guide=True,
 
                     is_used_controlnet=True,
+                    is_used_controlnet_term=True,
                     control_image=depth_map,
                     controlnet_scale=0.2,
 
