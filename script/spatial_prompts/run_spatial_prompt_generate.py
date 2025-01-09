@@ -1,241 +1,349 @@
-# from omegaconf import OmegaConf
-# import torch
-# from SmartSpatial.pipeline import SmartSpatialPipeline
-# import os
+import os
+import argparse
+import shutil
+from tqdm import tqdm
 
-# conf = OmegaConf.load('conf/base_config.yaml')
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# smart_spatial = SmartSpatialPipeline(conf, device)
+import torch
+from omegaconf import OmegaConf
 
-# def generation_pipeline_spatial_prompt(
-#     cfg,
+from SmartSpatial.pipeline import SmartSpatialPipeline
+from utils import bbox_ref_mapping
+from dataset.spatial_prompt import (
+    prompt_datas_front,
+    prompt_datas_behind,
+    prompt_datas_left,
+    prompt_datas_right,
+    prompt_datas_on,
+    prompt_datas_under,
+    prompt_datas_above,
+    prompt_datas_below
+)
+from utils import load_image
+from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
 
-#     prompt_datas,
+prompt_datas = {
+    "front": prompt_datas_front,
+    "behind": prompt_datas_behind,
+    "left": prompt_datas_left,
+    "right": prompt_datas_right,
+    "on": prompt_datas_on,
+    "under": prompt_datas_under,
+    "above": prompt_datas_above,
+    "below": prompt_datas_below
+}
 
-#     save_path="output",
+front_depth_img = load_image("reference_images/depth_maps/front.png")
+behind_depth_img = load_image("reference_images/depth_maps/behind.png")
+left_depth_img = load_image("reference_images/depth_maps/left.png")
+right_depth_img = load_image("reference_images/depth_maps/right.png")
+on_depth_img = load_image("reference_images/depth_maps/on.png")
+under_depth_img = load_image("reference_images/depth_maps/under.png")
+above_depth_img = load_image("reference_images/depth_maps/above.png")
+below_depth_img = load_image("reference_images/depth_maps/below.png")
 
-#     is_used_attention_guide=True,
+depth_maps = {
+    "front": front_depth_img,
+    "behind": behind_depth_img,
+    "left": left_depth_img,
+    "right": right_depth_img,
+    "on": on_depth_img,
+    "under": under_depth_img,
+    "above": above_depth_img,
+    "below": below_depth_img
+}
 
-#     is_used_controlnet=False,
-#     is_used_controlnet_term=False,
-#     controlnet=None,
-#     controlnet_scale = 1.0,
-#     single_control_image=None,
-#     depth_maps={},
-#     bbox_ref_mapping=None,
-#     spatial_types=["front"],
+def generation_pipeline_spatial_prompt(
+    smart_spatial_pipeline,
+    prompt_datas,
+    device,
+    is_save_result=False,
+    save_path="output",
 
-#     is_used_momentum=False,
-#     momentum=0.2,
+    is_used_attention_guide=True,
 
-#     is_used_salt=False,
-#     obj_set=None,
-#     bg_set=None,
+    is_used_controlnet=False,
+    is_used_controlnet_term=False,
+    controlnet=None,
+    controlnet_scale=1.0,
+    single_control_image=None,
+    depth_maps=None,
+    bbox_ref_mapping=None,
+    spatial_types=None,
 
-#     start_index=0,
-#     num_test=-1,
-#     save_every=10
-# ):
-#     num_tested_images = 0
-#     root_save_path = save_path
+    is_used_momentum=False,
+    momentum=0.2,
 
-#     spatial_type_prompt_datas = []
-#     for spatial_type in spatial_types:
-#       spatial_type_prompt_datas += prompt_datas[spatial_type]
+    is_used_salt=False,
+    obj_set=None,
+    bg_set=None,
 
-#     if start_index < 0 or start_index >= len(spatial_type_prompt_datas):
-#       raise ValueError("start_index is out of bounds.")
+    start_index=0,
+    num_test=-1,
+    save_every=10
+):
+    """
+    This function runs the generation pipeline with or without ControlNet,
+    momentum, attention guidance, etc.
+    """
 
-#     end_index = len(spatial_type_prompt_datas) if num_test==-1 else min(start_index + num_test, len(spatial_type_prompt_datas))
+    if spatial_types is None:
+        spatial_types = ["front"]
 
-#     with tqdm(total=end_index - start_index, desc="Generating Images") as pbar:
-#       for idx in range(start_index, end_index):
-#           data_dict = spatial_type_prompt_datas[idx]
+    num_tested_images = 0
+    root_save_path = save_path
 
-#           # Basic information
-#           prompt = data_dict['prompt']
-#           prompt_meta = data_dict['prompt_meta']
-#           center = prompt_meta['center']
-#           obj_pos_pairs = prompt_meta['objects']
-#           spatial_type = obj_pos_pairs[0]['pos']
+    # Collect all relevant prompt data from specified spatial types
+    spatial_type_prompt_datas = []
+    for spatial_type in spatial_types:
+        spatial_type_prompt_datas += prompt_datas[spatial_type]
 
-#           save_path = f"{root_save_path}/{idx}_{spatial_type}_{prompt[:10]}"
+    if start_index < 0 or start_index >= len(spatial_type_prompt_datas):
+        raise ValueError("start_index is out of bounds.")
 
-#           # Get the corresponding bbox data for different reference image
-#           bboxes = bbox_ref_mapping[spatial_type] # ball(obj), box(center)
-#           classes = [obj_pos_pairs[0]['obj'], center] # assume only 2
-#           bboxes = convert_bbox_data(bboxes)
+    end_index = (len(spatial_type_prompt_datas) if num_test == -1 
+                 else min(start_index + num_test, len(spatial_type_prompt_datas)))
 
-#           # Step 2: ControlNet
-#           depth_map = None
-#           if is_used_controlnet:
-#             if depth_maps:
-#               depth_map = depth_maps[spatial_type]
-#               depth_map = pil_to_numpy(depth_map)
-#               depth_map = numpy_to_pt(depth_map)
-#               depth_map = depth_map.to(device=device, dtype=torch.float32)
-#             else:
-#               depth_map = preprocess_depth_map(single_control_image)
-#               depth_map = depth_map.resize((512, 512))
+    with tqdm(total=end_index - start_index, desc="Generating Images") as pbar:
+        for idx in range(start_index, end_index):
+            data_dict = spatial_type_prompt_datas[idx]
 
-#               # Store the depth map
-#               if not os.path.exists(save_path):
-#                 os.makedirs(save_path)
+            # Basic information
+            prompt = data_dict['prompt']
+            prompt_meta = data_dict['prompt_meta']
+            center = prompt_meta['center']
+            obj_pos_pairs = prompt_meta['objects']
+            # E.g., 'front', 'behind', ...
+            spatial_type = obj_pos_pairs[0]['pos']
 
-#               depth_map_path = os.path.join(save_path, "depth_map.png")
-#               depth_map.save(depth_map_path)
-#               depth_map = pil_to_numpy(depth_map)
-#               depth_map = numpy_to_pt(depth_map)
-#               depth_map = depth_map.to(device=device, dtype=torch.float32)
+            # Create a shortened prompt to avoid super-long folder names
+            short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
+            current_save_path = f"{root_save_path}/{idx}_{spatial_type}_{short_prompt}"
 
-#         # Step 4: Organize the data and pass it to the attention guidance function for different settings
-#           # Prepare the bounding box data
-#           bbox_datas = []
-#           for obj_name, bbox in zip(classes, bboxes):
-#             if obj_name.lower() in prompt.lower():
+            # Get the corresponding bbox data for different reference images
+            bboxes = bbox_ref_mapping[spatial_type]  # example: [ball(obj), box(center)]
+            classes = [obj_pos_pairs[0]['obj'], center]  # assume only 2
+            bboxes = convert_bbox_data(bboxes)
 
-#               bbox_data = {
-#                   "caption": obj_name,
-#                   "box": bbox
-#               }
-#               bbox_datas.append(bbox_data)
+            # Prepare a depth_map if controlnet is used
+            depth_map_tensor = None
+            if is_used_controlnet:
+                if depth_maps and spatial_type in depth_maps:
+                    # depth_maps is a dict of PIL images
+                    depth_img = depth_maps[spatial_type]
+                    depth_map_tensor = pil_to_numpy(depth_img)
+                    depth_map_tensor = numpy_to_pt(depth_map_tensor)
+                    depth_map_tensor = depth_map_tensor.to(device=device, dtype=torch.float32)
+                else:
+                    raise ValueError(f"Depth map for spatial type {spatial_type} not found.")
 
-#         # Step5: Call the attention guidance function
-#         # Store: images(including attention maps), losses, iteration steps
-#         smart_spatial.generate(
-#                 prompt=free_form_prompt,
-#                 bbox_datas=bbox_datas,
+            # Prepare bounding box data
+            bbox_datas = []
+            for obj_name, bbox in zip(classes, bboxes):
+                if obj_name.lower() in prompt.lower():
+                    bbox_data = {
+                        "caption": obj_name,
+                        "box": bbox
+                    }
+                    bbox_datas.append(bbox_data)
 
-#                 is_save_images=False,
-#                 is_save_losses=False,
-#                 save_path=save_path,
+            # =============== CALL THE SMART SPATIAL PIPELINE ===============
+            smart_spatial_pipeline.generate(
+                prompt=prompt,
+                bbox_datas=bbox_datas,
 
-#                 is_used_attention_guide=True,
+                # Save logic
+                is_save_images=is_save_result,
+                is_save_losses=is_save_result,
+                save_path=current_save_path,
 
-#                 is_used_controlnet=True,
-#                 is_used_controlnet_term=True,
-#                 control_image=depth_map,
-#                 controlnet_scale=0.2,
+                # Attention guide
+                is_used_attention_guide=is_used_attention_guide,
 
-#                 is_used_momentum=True,
-#                 momentum=0.5,
+                # ControlNet
+                is_used_controlnet=is_used_controlnet,
+                is_used_controlnet_term=is_used_controlnet_term,
+                control_image=depth_map_tensor,
+                controlnet_scale=controlnet_scale,
 
-#                 is_process_bbox_data=False,
-#                 is_random_seed=False
-#             )
-#           num_tested_images += 1
+                # Momentum
+                is_used_momentum=is_used_momentum,
+                momentum=momentum,
 
-#           # Check if it's time to create a zip file
-#           if num_tested_images % save_every == 0 or num_tested_images == num_test or idx == end_index-1:
-#               zip_filename = f"{root_save_path}" # Base name without extension
-#               try:
-#                   # Remove existing zip file if it exists
-#                   existing_zip = f"{zip_filename}.zip"
-#                   if os.path.exists(existing_zip):
-#                       os.remove(existing_zip)
+                # Additional placeholders:
+                is_process_bbox_data=False,
+                is_random_seed=False
+            )
+            num_tested_images += 1
 
-#                   # Create a new zip file using shutil.make_archive
-#                   shutil.make_archive(zip_filename, 'zip', root_save_path)
-#                   print(f"\nCreated zip file: {existing_zip} after processing {num_tested_images} images.")
-#               except Exception as e:
-#                   print(f"\nFailed to create zip file: {e}")
+            # Check if it's time to create a zip file
+            if is_save_result:
+                if (num_tested_images % save_every == 0 
+                    or (num_tested_images == num_test and num_test != -1)
+                    or idx == end_index - 1):
+                    zip_filename = f"{root_save_path}"
+                    try:
+                        existing_zip = f"{zip_filename}.zip"
+                        if os.path.exists(existing_zip):
+                            os.remove(existing_zip)
+                        shutil.make_archive(zip_filename, 'zip', root_save_path)
+                        print(f"\nCreated zip file: {existing_zip} after processing {num_tested_images} images.")
+                    except Exception as e:
+                        print(f"\nFailed to create zip file: {e}")
 
-#           # Update the progress bar
-#           pbar.update(1)
+            pbar.update(1)
 
-#     return num_tested_images
+    return num_tested_images
 
 
-# from utils import bbox_ref_mapping
-# from prompt import (
-#     prompt_datas_front,
-#     prompt_datas_behind,
-#     prompt_datas_left,
-#     prompt_datas_right,
-#     prompt_datas_on,
-#     prompt_datas_under,
-#     prompt_datas_above,
-#     prompt_datas_below
-# )
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run SmartSpatialPipeline with optional ControlNet, momentum, etc."
+    )
+    parser.add_argument(
+        "--config_path",
+        type=str,
+        default="conf/base_config.yaml",
+        help="Path to the YAML config file."
+    )
+    parser.add_argument(
+        "--save_result",
+        action="store_true",
+        help="Whether to save the generated outputs."
+    )
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        default="output",
+        help="Directory to save the generated outputs."
+    )
+    parser.add_argument(
+        "--start_index",
+        type=int,
+        default=0,
+        help="Starting index for prompt data."
+    )
+    parser.add_argument(
+        "--num_test",
+        type=int,
+        default=-1,
+        help="Number of items to test. Use -1 to process all."
+    )
+    parser.add_argument(
+        "--save_every",
+        type=int,
+        default=10,
+        help="Number of processed items after which to create a zip file."
+    )
+    parser.add_argument(
+        "--use_attention_guide",
+        action="store_true",
+        help="Use attention guidance if provided."
+    )
+    parser.add_argument(
+        "--use_controlnet",
+        action="store_true",
+        help="Use ControlNet if provided."
+    )
+    parser.add_argument(
+        "--use_controlnet_term",
+        action="store_true",
+        help="Use ControlNet termination if provided."
+    )
+    parser.add_argument(
+        "--controlnet_scale",
+        type=float,
+        default=0.2,
+        help="Scaling factor for ControlNet."
+    )
+    parser.add_argument(
+        "--use_momentum",
+        action="store_true",
+        help="Use momentum if provided."
+    )
+    parser.add_argument(
+        "--momentum_value",
+        type=float,
+        default=0.2,
+        help="Momentum value, if momentum is used."
+    )
+    parser.add_argument(
+        "--use_salt",
+        action="store_true",
+        help="Use 'salt' if your pipeline supports it."
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="auto",
+        help="Device to run on: 'cpu', 'cuda', or 'auto' to detect automatically."
+    )
+    return parser.parse_args()
 
-# prompt_datas = {
-#     "front": prompt_datas_front,
-#     "behind": prompt_datas_behind,
-#     "left": prompt_datas_left,
-#     "right": prompt_datas_right,
-#     "on": prompt_datas_on,
-#     "under": prompt_datas_under,
-#     "above": prompt_datas_above,
-#     "below": prompt_datas_below
-# }
+def main():
+    args = parse_args()
 
-# from utils import load_image
+    # Load config via OmegaConf
+    conf = OmegaConf.load(args.config_path)
 
-# front_depth_img = load_image("reference_images/depth_maps/front.png")
-# behind_depth_img = load_image("reference_images/depth_maps/behind.png")
-# left_depth_img = load_image("reference_images/depth_maps/left.png")
-# right_depth_img = load_image("reference_images/depth_maps/right.png")
-# on_depth_img = load_image("reference_images/depth_maps/on.png")
-# under_depth_img = load_image("reference_images/depth_maps/under.png")
-# above_depth_img = load_image("reference_images/depth_maps/above.png")
-# below_depth_img = load_image("reference_images/depth_maps/below.png")
+    # Decide on device
+    if args.device == "auto":
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device(args.device)
 
-# depth_maps = {
-#     "front": front_depth_img,
-#     "behind": behind_depth_img,
-#     "left": left_depth_img,
-#     "right": right_depth_img,
-#     "on": on_depth_img,
-#     "under": under_depth_img,
-#     "above": above_depth_img,
-#     "below": below_depth_img
-# }
+    print(f"Using device: {device}")
 
-# save_path = 'output/visor'
-# model_name = "smart_spatial"
-# save_path = save_path + "/" + model_name
-# if not os.path.exists(save_path):
-#     os.makedirs(save_path)
+    # Initialize your pipeline
+    smart_spatial = SmartSpatialPipeline(conf, device)
 
-# # ControlNet & AG & Momentum
-# evaluation_pipeline_prompt(
-#     conf,
-#     unet,
-#     tokenizer,
-#     text_encoder,
-#     vae,
+    # Create save directory if not exists
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
 
-#     prompt_datas=prompt_datas,
+    # Example usage of the generation pipeline
+    generation_pipeline_spatial_prompt(
+        cfg=conf,
+        smart_spatial_pipeline=smart_spatial,
+        prompt_datas=prompt_datas,
+        device=device,
+        is_save_result=args.save_result,
+        save_path=args.save_path,
 
-#     save_path="output_controlnet_obj_mom",
+        is_used_attention_guide=args.use_attention_guide,
 
-#     is_used_attention_guide=True,
+        is_used_controlnet=args.use_controlnet,
+        is_used_controlnet_term=args.use_controlnet_term,
+        controlnet_scale=args.controlnet_scale,
+        depth_maps=depth_maps,
+        bbox_ref_mapping=bbox_ref_mapping,
+        spatial_types=["front", "behind", "left", "right", "on", "under", "above", "below"],
 
-#     is_used_controlnet=True,
-#     is_used_controlnet_term=True,
-#     controlnet=controlnet,
-#     controlnet_scale = 0.2,
-#     depth_maps=depth_maps,
-#     bbox_ref_mapping=bbox_ref_mapping,
-#     spatial_types=[
-#         'front',
-#         'behind',
-#         'left',
-#         'right',
-#         'on',
-#         'under',
-#         'above',
-#         'below'
-#     ],
+        is_used_momentum=args.use_momentum,
+        momentum=args.momentum_value,
 
-#     is_used_momentum=True,
-#     momentum=0.7,
+        is_used_salt=args.use_salt,
 
-#     is_used_salt=False,
-#     obj_set=None,
-#     bg_set=None,
+        start_index=args.start_index,
+        num_test=args.num_test,
+        save_every=args.save_every
+    )
 
-#     start_index=0,
-#     num_test=-1, # set to -1 for all data
-#     save_every=20
-# )
+if __name__ == "__main__":
+    main()
+
+    """
+        Example usage:
+            python -m script.spatial_prompts.run_spatial_prompt \
+            --config_path conf/base_config.yaml \
+            --save_result \
+            --save_path output_controlnet_obj_mom \
+            --start_index 0 \
+            --num_test -1 \
+            --save_every 20 \
+            --use_attention_guide \
+            --use_controlnet \
+            --use_controlnet_term \
+            --controlnet_scale 0.2 \
+            --use_momentum \
+            --momentum_value 0.7
+    """

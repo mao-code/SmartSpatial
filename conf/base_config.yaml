@@ -11,10 +11,10 @@ general:
 inference:
   loss_scale: 30
   batch_size: 1
-  loss_threshold: 0.5 # original: 0.2
-  max_iter: 5 # original: 10
+  loss_threshold: 0.5 
+  max_iter: 5
   max_index_step: 10
-  timesteps: 51
+  timesteps: 61
   classifier_free_guidance: 7.5
   rand_seed: 445
 

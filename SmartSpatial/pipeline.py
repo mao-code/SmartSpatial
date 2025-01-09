@@ -92,7 +92,9 @@ class SmartSpatialPipeline():
         bg_set=None,
         bbox_ref_mapping=None,
 
-        is_random_seed=False
+        is_random_seed=False,
+
+        negative_prompt=""
     ):
         logger.info("Inference")
         logger.info(f"Prompt: {prompt}")
@@ -107,9 +109,21 @@ class SmartSpatialPipeline():
         position_word_indices = [prompt.find(position) + 1]
 
         # Encode Classifier Embeddings
-        uncond_input = self.tokenizer(
-            [""] * self.cfg.inference.batch_size, padding="max_length", max_length=self.tokenizer.model_max_length, return_tensors="pt"
-        )
+        if negative_prompt:
+            uncond_input = self.tokenizer(
+                [negative_prompt] * self.cfg.inference.batch_size, 
+                padding="max_length", 
+                max_length=self.tokenizer.model_max_length, 
+                return_tensors="pt"
+            )
+        else:
+            uncond_input = self.tokenizer(
+                [""] * self.cfg.inference.batch_size, 
+                padding="max_length", 
+                max_length=self.tokenizer.model_max_length, 
+                return_tensors="pt"
+            )
+
         uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(self.device))[0]
 
         # Encode Prompt
@@ -139,8 +153,8 @@ class SmartSpatialPipeline():
         # Initialize DDIMScheduler
         noise_scheduler = self.ddim_scheduler
 
-        # noise_scheduler.set_timesteps(cfg.inference.timesteps)
-        noise_scheduler.set_timesteps(61)
+        noise_scheduler.set_timesteps(self.cfg.inference.timesteps)
+        # noise_scheduler.set_timesteps(61)
 
         latents = torch.randn(
             (self.cfg.inference.batch_size, 4, 64, 64),
@@ -441,7 +455,8 @@ class SmartSpatialPipeline():
         bbox_ref_mapping=None,
 
         is_process_bbox_data=True,
-        is_random_seed=False
+        is_random_seed=False,
+        negative_prompt="ball,box,low resolution,bad composition,blurry image,bad anatomy"
     ):
 
         # ------------------ example input ------------------
@@ -537,7 +552,8 @@ class SmartSpatialPipeline():
             bg_set=bg_set,
             bbox_ref_mapping=bbox_ref_mapping,
 
-            is_random_seed=is_random_seed
+            is_random_seed=is_random_seed,
+            negative_prompt=negative_prompt
         )
 
         if is_save_images:
