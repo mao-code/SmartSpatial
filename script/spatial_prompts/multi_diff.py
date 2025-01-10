@@ -30,6 +30,7 @@ from MultiDiffusion.region_based import (
     seed_everything,
     MultiDiffusion
 )
+from tqdm import tqdm
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -66,7 +67,7 @@ def main():
     for spatial_type in prompt_datas:
       all_prompt_datas += prompt_datas[spatial_type]
 
-    for (idx, prompt_data) in enumerate(all_prompt_datas):
+    for (idx, prompt_data) in tqdm(enumerate(all_prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(all_prompt_datas)):
         prompt = prompt_data['prompt']
         classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 
@@ -74,6 +75,10 @@ def main():
         spatial_type = prompt_data['prompt_meta']['objects'][0]['pos']
         depth_boxes = bbox_ref_mapping[spatial_type]
         W, H = 512, 512
+
+        seed_everything(42)
+        device = torch.device('cuda')
+        sd = MultiDiffusion(device, '1.5')
 
         # Create a mask image
         object_masks = []
@@ -85,7 +90,7 @@ def main():
             )
 
             # Convert to a torch tensor [1, H, W]
-            mask_torch = torch.from_numpy(mask_np)[None, ...]  # shape = [1, H, W]
+            mask_torch = torch.from_numpy(mask_np)[None, ...].to(device)  # shape = [1, H, W]
             object_masks.append(mask_torch)
         
         # Stack them: shape = [num_objects, 1, H, W]
@@ -95,12 +100,8 @@ def main():
         bg_mask = torch.clamp(bg_mask, 0, 1)
         masks = torch.cat([bg_mask, fg_masks])
 
-        seed_everything(42)
-        device = torch.device('cuda')
-        sd = MultiDiffusion(device, 1.5)
-
         prompts = [background] + classes
-        neg_prompts = ["low quality"] + "low quality"
+        neg_prompts = ["low quality"] + ["low quality" for i in range(len(classes))]
 
         img = sd.generate(masks, prompts, neg_prompts, H, W, 50, bootstrapping=20)
 

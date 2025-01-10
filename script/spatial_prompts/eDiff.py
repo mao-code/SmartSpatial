@@ -1,5 +1,5 @@
-from ..utils import bbox_ref_mapping
-from ..dataset.spatial_prompt import (
+from utils import bbox_ref_mapping
+from dataset.spatial_prompt import (
     prompt_datas_front,
     prompt_datas_behind,
     prompt_datas_left,
@@ -9,7 +9,7 @@ from ..dataset.spatial_prompt import (
     prompt_datas_above,
     prompt_datas_below
 )
-from ..utils import load_image
+from utils import load_image
 
 prompt_datas = {
     "front": prompt_datas_front,
@@ -27,8 +27,13 @@ import torch
 
 import os
 
-from paint_with_words import paint_with_words
+import importlib
+
+# Please rename "paint-with-words-sd" to "paint_with_words_sd"
+from paint_with_words_sd.paint_with_words import paint_with_words
+
 from PIL import Image
+from tqdm import tqdm
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -55,7 +60,6 @@ def create_mask_from_bbox(bbox, image_width, image_height):
 def main():
     # Please first clone the eDiff repo
     # git clone https://github.com/cloneofsimo/paint-with-words-sd.git
-    # cd paint-with-words-sd
 
     # 1. Setup config/paths
     save_path = "results/spatial_prompts/eDiff"
@@ -66,7 +70,7 @@ def main():
     for spatial_type in prompt_datas:
       all_prompt_datas += prompt_datas[spatial_type]
 
-    for (idx, prompt_data) in enumerate(all_prompt_datas):
+    for (idx, prompt_data) in tqdm(enumerate(all_prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(all_prompt_datas)):
         prompt = prompt_data['prompt']
         classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 
@@ -127,7 +131,7 @@ def main():
             input_prompt=input_prompt,
             num_inference_steps=30,
             guidance_scale=7.5,
-            device="cuda:0",
+            device="cuda"
         )
 
         # save image

@@ -28,6 +28,7 @@ import torch
 import os
 
 from pipeline_gradop_stroke2img import GradOPStroke2ImgPipeline
+from tqdm import tqdm
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -59,13 +60,13 @@ def main():
     # 1. Setup config/paths
     save_path = "results/spatial_prompts/hfg"
     os.makedirs(save_path, exist_ok=True)
-    
+
     # Flatten the prompt_datas
     all_prompt_datas = []
     for spatial_type in prompt_datas:
       all_prompt_datas += prompt_datas[spatial_type]
 
-    for (idx, prompt_data) in enumerate(all_prompt_datas):
+    for (idx, prompt_data) in tqdm(enumerate(all_prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(all_prompt_datas)):
         prompt = prompt_data['prompt']
         classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 
