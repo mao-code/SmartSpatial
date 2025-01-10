@@ -1,5 +1,5 @@
-from ..utils import bbox_ref_mapping
-from ..dataset.spatial_prompt import (
+from utils import bbox_ref_mapping
+from dataset.spatial_prompt import (
     prompt_datas_front,
     prompt_datas_behind,
     prompt_datas_left,
@@ -9,7 +9,7 @@ from ..dataset.spatial_prompt import (
     prompt_datas_above,
     prompt_datas_below
 )
-from ..utils import load_image
+from utils import load_image
 
 prompt_datas = {
     "front": prompt_datas_front,
@@ -27,7 +27,7 @@ import torch
 
 import os
 
-from pipeline_gradop_stroke2img import GradOPStroke2ImgPipeline
+from GradOP_Guided_Image_Synthesis.pipeline_gradop_stroke2img import GradOPStroke2ImgPipeline
 from tqdm import tqdm
 
 def create_mask_from_bbox(bbox, image_width, image_height):
