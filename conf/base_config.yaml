@@ -16,7 +16,7 @@ inference:
   max_index_step: 10
   timesteps: 61
   classifier_free_guidance: 7.5
-  rand_seed: 445
+  rand_seed: 42
 
 noise_schedule:
   beta_start: 0.00085

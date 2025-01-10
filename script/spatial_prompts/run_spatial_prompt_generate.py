@@ -118,6 +118,8 @@ def generation_pipeline_spatial_prompt(
             # Create a shortened prompt to avoid super-long folder names
             short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
             current_save_path = f"{root_save_path}/{idx}_{spatial_type}_{short_prompt}"
+            if not os.path.exists(current_save_path):
+                os.makedirs(current_save_path)
 
             # Get the corresponding bbox data for different reference images
             bboxes = bbox_ref_mapping[spatial_type]  # example: [ball(obj), box(center)]
@@ -302,7 +304,6 @@ def main():
 
     # Example usage of the generation pipeline
     generation_pipeline_spatial_prompt(
-        cfg=conf,
         smart_spatial_pipeline=smart_spatial,
         prompt_datas=prompt_datas,
         device=device,
@@ -333,7 +334,7 @@ if __name__ == "__main__":
 
     """
         Example usage:
-            python -m script.spatial_prompts.run_spatial_prompt \
+            python -m script.spatial_prompts.run_spatial_prompt_generate \
             --config_path conf/base_config.yaml \
             --save_result \
             --save_path output_controlnet_obj_mom \

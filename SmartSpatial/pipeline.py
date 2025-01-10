@@ -579,4 +579,6 @@ class SmartSpatialPipeline():
                     bbox_image_path
                 ) # save the bbox output image
 
+        torch.cuda.empty_cache()
+
         return pil_images
