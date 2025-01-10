@@ -61,7 +61,12 @@ def main():
     save_path = "results/spatial_prompts/multi_diff"
     os.makedirs(save_path, exist_ok=True)
 
-    for (idx, prompt_data) in enumerate(prompt_datas):
+    # Flatten the prompt_datas
+    all_prompt_datas = []
+    for spatial_type in prompt_datas:
+      all_prompt_datas += prompt_datas[spatial_type]
+
+    for (idx, prompt_data) in enumerate(all_prompt_datas):
         prompt = prompt_data['prompt']
         classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 
