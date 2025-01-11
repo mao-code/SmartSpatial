@@ -26,7 +26,9 @@ import numpy as np
 import torch
 
 import os
+from PIL import Image
 
+# Rename "GradOP-Guided-Image-Synthesis" to "GradOP_Guided_Image_Synthesis"
 from GradOP_Guided_Image_Synthesis.pipeline_gradop_stroke2img import GradOPStroke2ImgPipeline
 from tqdm import tqdm
 
@@ -99,12 +101,47 @@ def main():
             "CompVis/stable-diffusion-v1-4",
             torch_dtype=torch.float32
         )
+
         # define the guidance inputs: 1) text prompt and 2) guidance image containing coarse scribbles
         seed = 0
-        prompt = "a photo of a fox beside a tree"
-        # stroke_img = Image.open('./input-images/fox.png').convert('RGB').resize((512,512))
+        
+        # Create color map as a NumPy array (Stroke Image)
+        color_map_np = np.zeros((H, W, 3), dtype=np.uint8)
+        color_map_np[:] = (0, 0, 0)  # Background
+
+        object_colors = [
+            (255, 255, 255),
+            (0, 255, 255)
+        ]
+
+        # Fill entire color map with "background color" first
+        bg_color = (74, 18, 1)
+        color_map_np[:, :] = bg_color
+
+        # Create a mask image
+        object_masks = []
+        for i, bbox_item in enumerate(depth_boxes):
+            obj_color = object_colors[i % len(object_colors)]
+            mask_np = create_mask_from_bbox(
+                bbox_item['box'],
+                image_width=W,
+                image_height=H
+            )
+
+            # Fill bounding box region in color_map_np
+            # We only color the pixels where mask_np == 1
+            # We'll do something like:
+            rows, cols = np.where(mask_np == 1)
+            color_map_np[rows, cols, 0] = obj_color[0]
+            color_map_np[rows, cols, 1] = obj_color[1]
+            color_map_np[rows, cols, 2] = obj_color[2]
+
+        # Create a PIL image from the color_map_np
+        color_map_image = Image.fromarray(color_map_np, mode='RGB')
+        stroke_img = color_map_image
 
         # perform img2img guided synthesis using gradop+
+        device = torch.device('cuda')
         generator = torch.Generator(device=device).manual_seed(seed)
         img = pipeline.gradop_plus_stroke2img(prompt, stroke_img, strength=0.8, num_iterative_steps=3, grad_steps_per_iter=12, generator=generator)
 

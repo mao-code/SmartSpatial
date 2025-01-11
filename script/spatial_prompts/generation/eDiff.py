@@ -115,9 +115,9 @@ def main():
 
         settings = {
             "color_context": {
-                (0, 0, 0): f"{classes[0]},1.0",
-                (255, 255, 255): f"{classes[1]},1.0",
-                (74, 18, 1): f"{background},0.2",
+                object_colors[0]: f"{classes[0]},1.0",
+                object_colors[1]: f"{classes[1]},1.0",
+                bg_color: f"{background},0.2",
             },
             "input_prompt": prompt,
         }

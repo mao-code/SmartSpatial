@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
     """
         Example usage:
-            python -m script.spatial_prompts.run_spatial_prompt_generate \
+            python -m script.spatial_prompts.smart_spatial \
             --config_path conf/base_config.yaml \
             --save_result \
             --save_path output_controlnet_obj_mom \
