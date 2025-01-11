@@ -57,7 +57,7 @@ def generation_pipeline_spatial_prompt(
     prompt_datas,
     device,
     is_save_result=False,
-    save_path="output",
+    save_path="results/spatial_prompts/smart_spatial",
 
     is_used_attention_guide=True,
 
@@ -215,7 +215,7 @@ def parse_args():
     parser.add_argument(
         "--save_path",
         type=str,
-        default="output",
+        default="results/spatial_prompts/smart_spatial",
         help="Directory to save the generated outputs."
     )
     parser.add_argument(

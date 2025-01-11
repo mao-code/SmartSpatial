@@ -57,11 +57,12 @@ def create_mask_from_bbox(bbox, image_width, image_height):
 def main():
     # Please first clone the HFG repo
     # git clone https://github.com/1jsingh/GradOP-Guided-Image-Synthesis
-    # cd GradOP-Guided-Image-Synthesis
 
     # 1. Setup config/paths
     save_path = "results/spatial_prompts/hfg"
     os.makedirs(save_path, exist_ok=True)
+
+    device = torch.device('cuda')
 
     # Flatten the prompt_datas
     all_prompt_datas = []
@@ -77,30 +78,10 @@ def main():
         depth_boxes = bbox_ref_mapping[spatial_type]
         W, H = 512, 512
 
-        # Create a mask image
-        object_masks = []
-        for bbox_item in depth_boxes:
-            mask_np = create_mask_from_bbox(
-                bbox_item['box'],
-                image_width=W,
-                image_height=H
-            )
-
-            # Convert to a torch tensor [1, H, W]
-            mask_torch = torch.from_numpy(mask_np)[None, ...]  # shape = [1, H, W]
-            object_masks.append(mask_torch)
-        
-        # Stack them: shape = [num_objects, 1, H, W]
-        fg_masks = torch.cat(object_masks, dim=0).unsqueeze(1)  # each object is separate channel
-        
-        bg_mask = 1 - fg_masks.sum(dim=0, keepdim=True)  # shape = [1, 1, H, W]
-        bg_mask = torch.clamp(bg_mask, 0, 1)
-        masks = torch.cat([bg_mask, fg_masks])
-
         pipeline = GradOPStroke2ImgPipeline.from_pretrained(
             "CompVis/stable-diffusion-v1-4",
             torch_dtype=torch.float32
-        )
+        ).to(device)
 
         # define the guidance inputs: 1) text prompt and 2) guidance image containing coarse scribbles
         seed = 0
@@ -119,7 +100,6 @@ def main():
         color_map_np[:, :] = bg_color
 
         # Create a mask image
-        object_masks = []
         for i, bbox_item in enumerate(depth_boxes):
             obj_color = object_colors[i % len(object_colors)]
             mask_np = create_mask_from_bbox(
@@ -141,7 +121,6 @@ def main():
         stroke_img = color_map_image
 
         # perform img2img guided synthesis using gradop+
-        device = torch.device('cuda')
         generator = torch.Generator(device=device).manual_seed(seed)
         img = pipeline.gradop_plus_stroke2img(prompt, stroke_img, strength=0.8, num_iterative_steps=3, grad_steps_per_iter=12, generator=generator)
 
