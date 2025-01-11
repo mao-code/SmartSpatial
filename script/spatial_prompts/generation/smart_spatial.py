@@ -56,6 +56,7 @@ def generation_pipeline_spatial_prompt(
     smart_spatial_pipeline,
     prompt_datas,
     device,
+    is_use_random_seed=True,
     is_save_simple_result=True,
     is_save_result=False,
     save_path="results/spatial_prompts/smart_spatial",
@@ -119,8 +120,6 @@ def generation_pipeline_spatial_prompt(
             # Create a shortened prompt to avoid super-long folder names
             short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
             current_save_path = f"{root_save_path}/{idx}_{spatial_type}_{short_prompt}"
-            if not os.path.exists(current_save_path):
-                os.makedirs(current_save_path)
 
             # Get the corresponding bbox data for different reference images
             bboxes = bbox_ref_mapping[spatial_type]  # example: [ball(obj), box(center)]
@@ -174,7 +173,7 @@ def generation_pipeline_spatial_prompt(
 
                 # Additional placeholders:
                 is_process_bbox_data=False,
-                is_random_seed=False
+                is_random_seed=is_use_random_seed
             )
             num_tested_images += 1
 
@@ -193,7 +192,7 @@ def generation_pipeline_spatial_prompt(
                     except Exception as e:
                         print(f"\nFailed to create zip file: {e}")
 
-            if is_save_simple__result:
+            if is_save_simple_result:
                 img = imgs[0]
                 short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
                 current_save_path = f"{save_path}/{idx}_{spatial_type}_{short_prompt}"
@@ -215,7 +214,12 @@ def parse_args():
         help="Path to the YAML config file."
     )
     parser.add_argument(
-        "--is_save_simple_result",
+        "--use_random_seed",
+        action="store_true",
+        help="Whether to use random seed or not."
+    )
+    parser.add_argument(
+        "--use_save_simple_result",
         action="store_true",
         help="Whether to save only the output images."
     )
@@ -319,7 +323,8 @@ def main():
         smart_spatial_pipeline=smart_spatial,
         prompt_datas=prompt_datas,
         device=device,
-        is_save_simple_result=args.save_result,
+        is_use_random_seed=args.use_random_seed,
+        is_save_simple_result=args.use_save_simple_result,
         is_save_result=args.save_result,
         save_path=args.save_path,
 
@@ -346,10 +351,17 @@ if __name__ == "__main__":
     main()
 
     """
+        Test Case:
+            - SD+Ours
+            - SD+AG
+    """
+    
+    """
         Example usage:
             python -m script.spatial_prompts.generation.smart_spatial \
             --config_path conf/base_config.yaml \
-            --is_save_simple_result \
+            --use_random_seed \
+            --use_save_simple_result \
             --start_index 0 \
             --num_test -1 \
             --save_every 20 \
