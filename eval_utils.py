@@ -7,7 +7,7 @@ import clip
 from collections import defaultdict
 
 # Load YOLOv8 model
-yolo = YOLO('yolov8n.pt')  # You can choose a different model variant
+yolo = YOLO('yolov8x.pt')
 
 # Load CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -193,8 +193,9 @@ def average_results(results_list):
     avg_map = total_map / num_samples
     avg_clip_score = total_clip_score / num_samples
 
-    print(f'Average per-image mean IoU: {avg_iou:.4f}')
-    print(f'Average per-image mAP@0.5: {avg_map:.4f}')
-    print(f'Average CLIP score: {avg_clip_score:.4f}')
+    # print(f'Result List: {results_list}')
+    # print(f'Average per-image mean IoU: {avg_iou:.4f}')
+    # print(f'Average per-image mAP@0.5: {avg_map:.4f}')
+    # print(f'Average CLIP score: {avg_clip_score:.4f}')
 
     return avg_iou, avg_map, avg_clip_score

@@ -47,23 +47,27 @@ def main():
     img_root_path = args.img_root_path
     valid_extensions = ('.png', '.jpg', '.jpeg')
 
-    # List comprehension to iterate over files in the folder and filter by extension
     image_paths = [
         os.path.join(img_root_path, file)
         for file in os.listdir(img_root_path)
         if file.lower().endswith(valid_extensions)
     ]
 
-    results_list = run_iou_clip(image_paths, prompt_datas, bbox_ref_mapping)
+    # Orders Matter !!!
+    sorted_paths = sorted(image_paths, key=lambda x: int(x.split('/')[-1].split('_')[0]))
+
+    results_list = run_iou_clip(sorted_paths, prompt_datas, bbox_ref_mapping)
     avg_iou, avg_map, avg_clip_score = average_results(results_list)
 
     print(f"""
-        ---------------------------------------
-        Evaluation Results for {img_root_path}:
-          - Average IoU: {avg_iou}
-          - Average mAP: {avg_map}
-          - Average Clip Score: {avg_clip_score}
-        ---------------------------------------
+    ---------------------------------------
+    Total Images Number: {len(sorted_paths)}
+    Total Results Calculated: {len(results_list)}
+    Evaluation Results for {img_root_path}:
+        - Average per-image mean IoU: {avg_iou:.4f}
+        - Average per-image mAP@0.5: {avg_map:.4f}
+        - Average CLIP score: {avg_clip_score:.4f}
+    ---------------------------------------
     """)    
 
 if __name__ == "__main__":
