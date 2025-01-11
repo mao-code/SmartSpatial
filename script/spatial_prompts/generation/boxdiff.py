@@ -31,10 +31,12 @@ from PIL import Image
 from tqdm import tqdm
 
 # --------- BoxDiff imports ----------
+# modify the import in BoxDiff (to relative path) for 2 files (run_sd_boxdiff.py and pipeline)
 from BoxDiff.config import RunConfig
 from BoxDiff.pipeline.sd_pipeline_boxdiff import BoxDiffPipeline
 from BoxDiff.utils.ptp_utils import AttentionStore
-from BoxDiff.run_boxdiff import load_model, run_on_prompt
+from BoxDiff.run_sd_boxdiff import load_model, run_on_prompt
+from pathlib import Path
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -98,19 +100,19 @@ def main():
 
     # Prepare a default config object for BoxDiff
     config = RunConfig(
-        prompt=prompt,
+        prompt="",
         sd_2_1=False,              
         seeds=[42],                
-        output_path=os.path.abspath(save_path),
+        output_path=Path(save_path),
         token_indices=None,        
         bbox=[],                 
-        color=[(255,255,0),(255,0,255)]       
+        color=[(255,255,0),(255,0,255)],    
         guidance_scale=7.5,
         n_inference_steps=50,
         max_iter_to_alter=10,
-        thresholds=[0.3],
+        thresholds={0: 0.05, 10: 0.5, 20: 0.8},
         scale_factor=1.0,
-        scale_range=1,
+        scale_range=(1.0, 0.5),
         smooth_attentions=False,
         sigma=0.5,
         kernel_size=3,
@@ -135,6 +137,7 @@ def main():
         W, H = 512, 512
 
         for depth_box in depth_boxes:
+            depth_box = depth_box['box']
             x1, y1 = depth_box['x'], depth_box['y']
             x2, y2 = x1 + depth_box['w'], y1 + depth_box['h']
 

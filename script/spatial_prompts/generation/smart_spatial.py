@@ -56,6 +56,7 @@ def generation_pipeline_spatial_prompt(
     smart_spatial_pipeline,
     prompt_datas,
     device,
+    is_save_simple_result=True,
     is_save_result=False,
     save_path="results/spatial_prompts/smart_spatial",
 
@@ -149,7 +150,7 @@ def generation_pipeline_spatial_prompt(
                     bbox_datas.append(bbox_data)
 
             # =============== CALL THE SMART SPATIAL PIPELINE ===============
-            smart_spatial_pipeline.generate(
+            imgs = smart_spatial_pipeline.generate(
                 prompt=prompt,
                 bbox_datas=bbox_datas,
 
@@ -192,6 +193,12 @@ def generation_pipeline_spatial_prompt(
                     except Exception as e:
                         print(f"\nFailed to create zip file: {e}")
 
+            if is_save_simple__result:
+                img = imgs[0]
+                short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
+                current_save_path = f"{save_path}/{idx}_{spatial_type}_{short_prompt}"
+                img.save(current_save_path+"smart_spatial.png")
+
             pbar.update(1)
 
     return num_tested_images
@@ -206,6 +213,11 @@ def parse_args():
         type=str,
         default="conf/base_config.yaml",
         help="Path to the YAML config file."
+    )
+    parser.add_argument(
+        "--is_save_simple_result",
+        action="store_true",
+        help="Whether to save only the output images."
     )
     parser.add_argument(
         "--save_result",
@@ -307,6 +319,7 @@ def main():
         smart_spatial_pipeline=smart_spatial,
         prompt_datas=prompt_datas,
         device=device,
+        is_save_simple_result=args.save_result,
         is_save_result=args.save_result,
         save_path=args.save_path,
 
@@ -334,10 +347,9 @@ if __name__ == "__main__":
 
     """
         Example usage:
-            python -m script.spatial_prompts.smart_spatial \
+            python -m script.spatial_prompts.generation.smart_spatial \
             --config_path conf/base_config.yaml \
-            --save_result \
-            --save_path output_controlnet_obj_mom \
+            --is_save_simple_result \
             --start_index 0 \
             --num_test -1 \
             --save_every 20 \

@@ -836,7 +836,7 @@ prompt_datas_above = [
     {
         'prompt': 'A sports ball is above a dog in a parl.',
         'prompt_meta': {
-            'center': 'dining table',
+            'center': 'dog',
             'objects': [{'obj': 'sports ball', 'pos': 'above'}],
             'background': 'park'
         }
