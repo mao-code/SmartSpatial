@@ -838,7 +838,7 @@ prompt_datas_above = [
         'prompt_meta': {
             'center': 'dog',
             'objects': [{'obj': 'sports ball', 'pos': 'above'}],
-            'background': 'park'
+            'background': 'parl'
         }
     },
     {
