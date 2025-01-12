@@ -9,17 +9,6 @@ import torch
 from omegaconf import OmegaConf
 
 from SmartSpatial.pipeline import SmartSpatialPipeline
-from utils import bbox_ref_mapping
-from dataset.spatial_prompt import (
-    prompt_datas_front,
-    prompt_datas_behind,
-    prompt_datas_left,
-    prompt_datas_right,
-    prompt_datas_on,
-    prompt_datas_under,
-    prompt_datas_above,
-    prompt_datas_below
-)
 from utils import load_image
 from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
 
@@ -246,7 +235,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # !gdown 14e9BODX0PEe-FpCORvB1bdwZOb7hInxB
+    # !gdown 14e9BODX0PEe-FpCORvB1bdwZOb7hInxB -O coco2017.pkl
     """
     [
         {
@@ -262,7 +251,7 @@ def main():
     ]
     """
 
-    with open('evaluation.pkl', 'rb') as f:
+    with open('coco2017.pkl', 'rb') as f:
         data = pickle.load(f)
 
     # Load config via OmegaConf
