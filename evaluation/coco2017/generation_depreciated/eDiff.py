@@ -10,16 +10,39 @@ from PIL import Image
 from tqdm import tqdm
 import pickle
 
+from utils import bbox_ref_mapping
+def get_spatial_type(caption):
+    if "front" in caption:
+        return "front"
+    elif "behind" in caption:
+        return "behind"
+    elif "left" in caption:
+        return "left"
+    elif "right" in caption:
+        return "right"
+    elif "on" in caption:
+        return "on"
+    elif "under" in caption:
+        return "under"
+    elif "above" in caption:
+        return "above"
+    elif "below" in caption:
+        return "below"
+    else:
+        return None
+
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
     Create a binary mask (as a NumPy array) for a given bounding box.
+    - bbox: dict with 'x', 'y', 'w', 'h'
+    - image_width, image_height: final dimensions for the mask
     """
     mask = np.zeros((image_height, image_width), dtype=np.float32)
     
-    x_min = int(bbox[0])
-    y_min = int(bbox[1])
-    x_max = int(bbox[2])
-    y_max = int(bbox[3])
+    x_min = int(bbox['x'])
+    y_min = int(bbox['y'])
+    x_max = int(bbox['x'] + bbox['w'])
+    y_max = int(bbox['y'] + bbox['h'])
 
     # Clip the bounding box values so they don't go out of image boundaries
     x_min = max(0, min(x_min, image_width))
@@ -37,6 +60,7 @@ def main():
     # !gdown 14e9BODX0PEe-FpCORvB1bdwZOb7hInxB -O coco2017.pkl
     with open('coco2017.pkl', 'rb') as f:
         data = pickle.load(f)
+    data = data[:1000]
 
     # 1. Setup config/paths
     save_path = "results/coco2017/eDiff"
@@ -45,8 +69,19 @@ def main():
     for (idx, data_dict) in tqdm(enumerate(data), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(data)):
         # Basic information
         caption = data_dict['caption']
-        bboxes = [boxes.squeeze(0).tolist() for boxes in data_dict['bounding_boxes']]
-        classes = data_dict["classes"]
+        # bboxes = [boxes.squeeze(0).tolist() for boxes in data_dict['bounding_boxes']]
+        classes = [cls.lower() for cls in data_dict["classes"]]
+
+        # Prepare bounding box data
+        bboxes = []
+        spatial_type = get_spatial_type(caption)
+        depth_boxes = bbox_ref_mapping[spatial_type]  # example: [ball(obj), box(center)]
+        for depth_box in depth_boxes:
+            depth_box = depth_box['box']
+            x1, y1 = depth_box['x'], depth_box['y']
+            x2, y2 = x1 + depth_box['w'], y1 + depth_box['h']
+
+            bboxes.append([x1, y1, x2, y2])
 
         prompt = caption
 

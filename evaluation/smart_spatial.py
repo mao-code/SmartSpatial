@@ -20,17 +20,7 @@ from dataset.spatial_prompt import (
 )
 from utils import load_image
 from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
-
-prompt_datas = {
-    "front": prompt_datas_front,
-    "behind": prompt_datas_behind,
-    "left": prompt_datas_left,
-    "right": prompt_datas_right,
-    "on": prompt_datas_on,
-    "under": prompt_datas_under,
-    "above": prompt_datas_above,
-    "below": prompt_datas_below
-}
+from coco2017.prepare import COCO2017
 
 front_depth_img = load_image("reference_images/depth_maps/front.png")
 behind_depth_img = load_image("reference_images/depth_maps/behind.png")
@@ -205,8 +195,16 @@ def generation_pipeline_spatial_prompt(
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run SmartSpatialPipeline with optional ControlNet, momentum, etc."
+        description="Run SmartSpatialPipeline"
     )
+
+    parser.add_argument(
+        "--dataset",
+        choices=["spatial_prompts", "coco2017", "flikr30k"],
+        default="spatial_prompts",
+        help="Types of dataset to generate images"
+    )
+
     parser.add_argument(
         "--config_path",
         type=str,
@@ -302,6 +300,26 @@ def main():
 
     # Load config via OmegaConf
     conf = OmegaConf.load(args.config_path)
+
+    prompt_datas = None
+    if args.dataset == "spatial_prompts":
+        prompt_datas = {
+            "front": prompt_datas_front,
+            "behind": prompt_datas_behind,
+            "left": prompt_datas_left,
+            "right": prompt_datas_right,
+            "on": prompt_datas_on,
+            "under": prompt_datas_under,
+            "above": prompt_datas_above,
+            "below": prompt_datas_below
+        }
+    elif args.dataset == "coco2017":
+        coco2017 = COCO2017()
+        prompt_datas = coco2017.get_data()
+    elif args.dataset == "flikr30k":
+        raise NotImplementedError("Flikr30k dataset is not supported yet.")
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported.")
 
     # Decide on device
     if args.device == "auto":

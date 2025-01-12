@@ -11,17 +11,6 @@ from dataset.spatial_prompt import (
 )
 from utils import load_image
 
-prompt_datas = {
-    "front": prompt_datas_front,
-    "behind": prompt_datas_behind,
-    "left": prompt_datas_left,
-    "right": prompt_datas_right,
-    "on": prompt_datas_on,
-    "under": prompt_datas_under,
-    "above": prompt_datas_above,
-    "below": prompt_datas_below
-}
-
 import numpy as np
 import torch
 
@@ -34,6 +23,8 @@ from paint_with_words_sd.paint_with_words import paint_with_words
 
 from PIL import Image
 from tqdm import tqdm
+import argparse
+from coco2017.prepare import COCO2017
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -57,20 +48,58 @@ def create_mask_from_bbox(bbox, image_width, image_height):
     mask[y_min:y_max, x_min:x_max] = 1.0
     return mask
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run BoxDiffusion"
+    )
+
+    parser.add_argument(
+        "--dataset",
+        choices=["spatial_prompts", "coco2017", "flikr30k"],
+        default="spatial_prompts",
+        help="Types of dataset to generate images"
+    )
+
+    return parser.parse_args()
+
 def main():
     # Please first clone the eDiff repo
     # git clone https://github.com/cloneofsimo/paint-with-words-sd.git
+
+    args = parse_args()
+
+    prompt_datas = None
+    if args.dataset == "spatial_prompts":
+        prompt_datas = {
+            "front": prompt_datas_front,
+            "behind": prompt_datas_behind,
+            "left": prompt_datas_left,
+            "right": prompt_datas_right,
+            "on": prompt_datas_on,
+            "under": prompt_datas_under,
+            "above": prompt_datas_above,
+            "below": prompt_datas_below
+        }
+
+        # Flatten the prompt_datas
+        all_prompt_datas = []
+        for spatial_type in prompt_datas:
+            all_prompt_datas += prompt_datas[spatial_type]
+
+        prompt_datas = all_prompt_datas
+    elif args.dataset == "coco2017":
+        coco2017 = COCO2017()
+        prompt_datas = coco2017.get_data()
+    elif args.dataset == "flikr30k":
+        raise NotImplementedError("Flikr30k dataset is not supported yet.")
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported.")
 
     # 1. Setup config/paths
     save_path = "results/spatial_prompts/eDiff"
     os.makedirs(save_path, exist_ok=True)
     
-    # Flatten the prompt_datas
-    all_prompt_datas = []
-    for spatial_type in prompt_datas:
-      all_prompt_datas += prompt_datas[spatial_type]
-
-    for (idx, prompt_data) in tqdm(enumerate(all_prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(all_prompt_datas)):
+    for (idx, prompt_data) in tqdm(enumerate(prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(prompt_datas)):
         prompt = prompt_data['prompt']
         classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 

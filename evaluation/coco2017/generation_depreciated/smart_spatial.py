@@ -11,14 +11,34 @@ from omegaconf import OmegaConf
 from SmartSpatial.pipeline import SmartSpatialPipeline
 from utils import load_image
 from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
+from utils import bbox_ref_mapping
+
+from ..prepare import COCO2017
+
+front_depth_img = load_image("reference_images/depth_maps/front.png")
+behind_depth_img = load_image("reference_images/depth_maps/behind.png")
+left_depth_img = load_image("reference_images/depth_maps/left.png")
+right_depth_img = load_image("reference_images/depth_maps/right.png")
+on_depth_img = load_image("reference_images/depth_maps/on.png")
+under_depth_img = load_image("reference_images/depth_maps/under.png")
+above_depth_img = load_image("reference_images/depth_maps/above.png")
+below_depth_img = load_image("reference_images/depth_maps/below.png")
+
+depth_maps = {
+    "front": front_depth_img,
+    "behind": behind_depth_img,
+    "left": left_depth_img,
+    "right": right_depth_img,
+    "on": on_depth_img,
+    "under": under_depth_img,
+    "above": above_depth_img,
+    "below": below_depth_img
+}
 
 def generation_pipeline_coco2017(
     smart_spatial_pipeline,
     data,
     device,
-
-    start_image_index=0,
-    end_index=1000,
 
     is_use_random_seed=True,
     is_save_simple_result=True,
@@ -37,55 +57,30 @@ def generation_pipeline_coco2017(
     num_tested_images = 0
     root_save_path = save_path
 
-    with tqdm(total=end_index - start_image_index, desc="Generating Images") as pbar:
-      for idx in range(start_image_index, end_index):
-        data_dict = data[idx]
+    for (idx, prompt_data) in tqdm(enumerate(data), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(data)):
+        
+        prompt = prompt_data['prompt']
+        classes = [prompt_data['prompt_meta']['objects'][0]['obj'], prompt_data['prompt_meta']['center']]
 
-        # Basic information
-        img_url = data_dict['image_url']
-        image = io.imread(img_url) # numpy
-        caption = data_dict['caption']
-        bboxes = [boxes.squeeze(0) for boxes in data_dict['bounding_boxes']]
-        classes = data_dict["classes"]
+        background = prompt_data['prompt_meta']['background']
+        spatial_type = prompt_data['prompt_meta']['objects'][0]['pos']
+        depth_boxes = bbox_ref_mapping[spatial_type]
 
-        save_path = f"{root_save_path}/{idx}_{caption[:10]}"
-
-        # Normalize the coordinate of bounding boxes
-        original_height, original_width = image.shape[:2] # numpy with shape HxWxC
-        # Define resized depth map dimensions
-        resized_width, resized_height = 512, 512
-
-        # Calculate scaling factors
-        scale_x = resized_width / original_width
-        scale_y = resized_height / original_height
-
-        # Scale the bounding boxes to match the resized depth map
-        scaled_bboxes = [
-            [x1 * scale_x, y1 * scale_y, x2 * scale_x, y2 * scale_y]
-            for [x1, y1, x2, y2] in bboxes
-        ]
-
-        # Normalize the scaled bounding boxes based on resized dimensions
-        normalized_bboxes = [
-            [[x1 / resized_width, y1 / resized_height, x2 / resized_width, y2 / resized_height]]
-            for [x1, y1, x2, y2] in scaled_bboxes
-        ]
-
-        # Use depth helper function to convert it to a depth map
-        depth_map = None
+        depth_map_tensor = None
         if is_used_controlnet:
-            depth_map = smart_spatial_pipeline.preprocess_depth_map(img_url)
-            depth_map = depth_map.resize((512, 512))
+            # depth_maps is a dict of PIL images
+            depth_img = depth_maps[spatial_type]
+            depth_map_tensor = pil_to_numpy(depth_img)
+            depth_map_tensor = numpy_to_pt(depth_map_tensor)
+            depth_map_tensor = depth_map_tensor.to(device=device, dtype=torch.float32)
+        else:
+            raise ValueError(f"Depth map for spatial type {spatial_type} not found.")
 
-            depth_map = pil_to_numpy(depth_map)
-            depth_map = numpy_to_pt(depth_map)
-            depth_map = depth_map.to(device=device, dtype=torch.float32)
-
-        # Organize the data and pass it to the attention guidance function for different settings
-        # Prepare the bounding box data
+        # Prepare bounding box data
+        bboxes = convert_bbox_data(depth_boxes)
         bbox_datas = []
-        for obj_name, bbox in zip(classes, normalized_bboxes):
-            if obj_name.lower() in caption.lower():
+        for obj_name, bbox in zip(classes, bboxes):
+            if obj_name.lower() in prompt.lower():
                 bbox_data = {
                     "caption": obj_name,
                     "box": bbox
@@ -94,7 +89,7 @@ def generation_pipeline_coco2017(
 
         # Call the pipeline function
         imgs = smart_spatial_pipeline.generate(
-            prompt=caption,
+            prompt=prompt,
             bbox_datas=bbox_datas,
 
             # Save logic
@@ -108,7 +103,7 @@ def generation_pipeline_coco2017(
             # ControlNet
             is_used_controlnet=is_used_controlnet,
             is_used_controlnet_term=is_used_controlnet_term,
-            control_image=depth_map,
+            control_image=depth_map_tensor,
             controlnet_scale=controlnet_scale,
 
             # Momentum
@@ -123,12 +118,9 @@ def generation_pipeline_coco2017(
 
         if is_save_simple_result:
             img = imgs[0]
-            short_prompt = caption.replace(" ", "_")[:10]  # up to 10 chars
-            current_save_path = f"{save_path}/{idx}_{short_prompt}"
+            short_prompt = prompt.replace(" ", "_")[:10]  # up to 10 chars
+            current_save_path = f"{root_save_path}/{idx}_{spatial_type}_{short_prompt}"
             img.save(current_save_path+"smart_spatial.png")
-
-        # Update the progress bar
-        pbar.update(1)
 
     return num_tested_images
 
@@ -164,30 +156,6 @@ def parse_args():
         help="Directory to save the generated outputs."
     )
     parser.add_argument(
-        "--start_index",
-        type=int,
-        default=0,
-        help="Starting index for prompt data."
-    )
-    parser.add_argument(
-        "--end_index",
-        type=int,
-        default=1000,
-        help="Ending index for prompt data."
-    )
-    parser.add_argument(
-        "--num_test",
-        type=int,
-        default=-1,
-        help="Number of items to test. Use -1 to process all."
-    )
-    parser.add_argument(
-        "--save_every",
-        type=int,
-        default=10,
-        help="Number of processed items after which to create a zip file."
-    )
-    parser.add_argument(
         "--use_attention_guide",
         action="store_true",
         help="Use attention guidance if provided."
@@ -219,43 +187,14 @@ def parse_args():
         default=0.2,
         help="Momentum value, if momentum is used."
     )
-    parser.add_argument(
-        "--use_salt",
-        action="store_true",
-        help="Use 'salt' if your pipeline supports it."
-    )
-    parser.add_argument(
-        "--device",
-        type=str,
-        default="auto",
-        help="Device to run on: 'cpu', 'cuda', or 'auto' to detect automatically."
-    )
     return parser.parse_args()
 
 def main():
     args = parse_args()
 
-    # !gdown 14e9BODX0PEe-FpCORvB1bdwZOb7hInxB -O coco2017.pkl
-    """
-    [
-        {
-            'image_url': 'http://images.cocodataset.org/val2017/000000397133.jpg',
-            'caption': 'The person is standing to the right of the oven.',
-            'bounding_boxes': [
-                tensor([[385.0713,  68.8378, 498.9966, 347.7491]]),
-                tensor([[233.2383, 191.3256, 396.4366, 312.5436]])
-            ],
-            'classes': ['person', 'oven']
-        },
-        ...
-    ]
-    """
-
-    with open('coco2017.pkl', 'rb') as f:
-        data = pickle.load(f)
-
     # Load config via OmegaConf
     conf = OmegaConf.load(args.config_path)
+    prompt_datas = COCO2017.get_data()
 
     # Decide on device
     if args.device == "auto":
@@ -275,11 +214,8 @@ def main():
     # Example usage of the generation pipeline
     generation_pipeline_coco2017(
         smart_spatial_pipeline=smart_spatial,
-        data=data,
+        data=prompt_datas,
         device=device,
-
-        start_image_index=args.start_index,
-        end_index=args.end_index,
 
         is_use_random_seed=args.use_random_seed,
         is_save_simple_result=args.use_save_simple_result,
@@ -301,11 +237,10 @@ if __name__ == "__main__":
     
     """
         Example usage:
-            python -m script.spatial_prompts.generation.smart_spatial \
+            python -m evaluation.coco2017.generation.smart_spatial \
             --config_path conf/base_config.yaml \
             --use_random_seed \
             --use_save_simple_result \
-            --start_index 0 \
             --num_test -1 \
             --save_every 20 \
             --use_attention_guide \
