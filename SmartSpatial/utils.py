@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def compute_ca_loss(
     attn_maps_mid, # List of tensors
     attn_maps_up,  # List of tensors
