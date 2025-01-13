@@ -16,15 +16,19 @@ def compute_ca_loss(
     alpha=1,
 
     is_used_controlnet_term=False,
-    beta=0.3,    # controlnet term loss weight
+    beta=0.3, # Controlnet term loss weight
     attn_maps_down_control=None,
-    attn_maps_mid_control=None
+    attn_maps_mid_control=None,
+
+    is_special_token_guide=True,
+    sot_idx=None,
+    eot_idx=None,
+    gamma=0.5 # Special token term loss weight
 ):
     loss = 0
     controlnet_loss = 0
 
     object_number = len(bboxes)
-    # object_number = len(object_positions)
 
     if object_number == 0:
         return torch.tensor(0).float().cuda() if torch.cuda.is_available() else torch.tensor(0).float()
@@ -43,20 +47,19 @@ def compute_ca_loss(
 
             ###### Object mask ######
             for obj_box in bboxes[obj_idx]:
-
                 x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
                     int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
                 mask[y_min: y_max, x_min: x_max] = 1
 
             ###### Loss Calculation ######
+            # For multi-token objects (e.g. "wine glass"), we use the same object bbox mask.
             for obj_position in object_positions[obj_idx]:
                 ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
                 activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1)/ca_map_obj.reshape(b, -1).sum(dim=-1)
 
                 obj_loss += torch.mean((1 - activation_value) ** 2)
 
-            loss += (obj_loss/len(object_positions[obj_idx]))
-
+            loss += (obj_loss/len(object_positions[obj_idx])) 
 
     # For attention maps up
     for attn_map_integrated in attn_maps_up[0]: # first up block
@@ -85,34 +88,43 @@ def compute_ca_loss(
 
             loss += (obj_loss / len(object_positions[obj_idx]))
 
+    ##### Loss for Special Tokens #####
+    if is_special_token_guide and (sot_idx is not None) and (eot_idx is not None):
+        # 1. Create union mask (and background mask) once
+        device = attn_maps_mid[0].device
+        b, i, j = attn_maps_mid[0].shape
+        H = W = int(math.sqrt(i))
+        union_mask = create_union_mask(
+            [box for sublist in bboxes for box in [sublist]]  # flatten if needed
+            if isinstance(bboxes[0], list) else bboxes,
+            H, W
+        ).to(device)
+        background_mask = create_background_mask(union_mask).to(device)
+
+        # 2. Compute special token loss on mid block maps
+        special_token_loss = 0.0
+        for attn_map_integrated in attn_maps_mid:
+            st_loss = compute_special_token_loss(
+                attn_map_integrated,
+                sot_idx,
+                eot_idx,
+                union_mask,
+                background_mask
+            )
+            special_token_loss += st_loss
+
+        # 3. Compute special token loss on up block maps
+        for attn_map_integrated in attn_maps_up[0]:  # or however you want to iterate
+            st_loss = compute_special_token_loss(
+                attn_map_integrated,
+                sot_idx,
+                eot_idx,
+                union_mask,
+                background_mask
+            )
+            special_token_loss += st_loss
+
     if is_used_controlnet_term:
-      # For attention maps down
-      # The paper said that down block sampling did not effective in backward guidance
-      # for attn_map_integrated in attn_maps_down_control[0]: # so that we can get the tensor
-      #     attn_map = attn_map_integrated
-
-      #     b, i, j = attn_map.shape
-      #     H = W = int(math.sqrt(i))
-
-      #     for obj_idx in range(object_number):
-      #         obj_loss = 0
-
-      #         mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
-      #         for obj_box in bboxes[obj_idx]:
-      #             x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
-      #                 int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
-      #             mask[y_min: y_max, x_min: x_max] = 1
-
-      #         for obj_position in object_positions[obj_idx]:
-      #             ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
-
-      #             activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1) / ca_map_obj.reshape(b, -1).sum(
-      #                 dim=-1)
-
-      #             obj_loss += torch.mean((1 - activation_value) ** 2)
-
-      #         controlnet_loss += (obj_loss / len(object_positions[obj_idx]))
-
       # For attention maps mid
       for attn_map_integrated in attn_maps_mid_control:
           attn_map = attn_map_integrated
@@ -121,25 +133,25 @@ def compute_ca_loss(
 
           ###### Loss for Objects ######
           for obj_idx in range(object_number):
-              obj_loss = 0
+            obj_loss = 0
 
-              mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
+            mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
 
-              ###### Object mask ######
-              for obj_box in bboxes[obj_idx]:
+            ###### Object mask ######
+            for obj_box in bboxes[obj_idx]:
 
-                  x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
-                      int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
-                  mask[y_min: y_max, x_min: x_max] = 1
+                x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
+                    int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
+                mask[y_min: y_max, x_min: x_max] = 1
 
-              ###### Loss Calculation ######
-              for obj_position in object_positions[obj_idx]:
-                  ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
-                  activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1)/ca_map_obj.reshape(b, -1).sum(dim=-1)
+            ###### Loss Calculation ######
+            for obj_position in object_positions[obj_idx]:
+                ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
+                activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1)/ca_map_obj.reshape(b, -1).sum(dim=-1)
 
-                  obj_loss += torch.mean((1 - activation_value) ** 2)
+                obj_loss += torch.mean((1 - activation_value) ** 2)
 
-              controlnet_loss += (obj_loss/len(object_positions[obj_idx]))
+            controlnet_loss += (obj_loss/len(object_positions[obj_idx]))
 
     # Average the losses (total number of attention maps)
     loss = loss / (object_number * (len(attn_maps_up[0]) + len(attn_maps_mid)))
@@ -149,11 +161,104 @@ def compute_ca_loss(
 
     # Add new terms to the total loss
     if not is_used_controlnet_term:
-      beta = 0
+        beta = 0
+    if not is_special_token_guide:
+        gamma = 0
 
-    total_loss = alpha * loss + beta * controlnet_loss
+    total_loss = alpha*loss + beta*controlnet_loss + gamma*special_token_loss
 
     return total_loss
+
+def get_special_token_indices(tokenizer, prompt):
+    """
+    Given a tokenizer and prompt, returns the indices of the [SoT] and [EoT] tokens 
+    within the cross-attention dimension.
+    
+    NOTE: This is an example. You need to adapt it to however your pipeline 
+    or custom tokens are actually named or appended.
+    """
+    # Tokenize the prompt
+    # For example, if using CLIPTokenizer or similar:
+    # encoded = tokenizer(prompt, truncation=True, max_length=77, return_tensors="pt")
+    
+    # Example placeholder: pretend tokenizer returns a list of tokens
+    tokens = tokenizer.tokenize(prompt)  # or your actual usage
+    
+    sot_idx = None
+    eot_idx = None
+    
+    # Loop through the tokens to find [SoT], [EoT]
+    for i, tok in enumerate(tokens):
+        if tok == "[SoT]":
+            sot_idx = i
+        elif tok == "[EoT]":
+            eot_idx = i
+            
+    return sot_idx, eot_idx
+
+def create_union_mask(bboxes, H, W):
+    """
+    Given all bounding boxes for the image, create a union mask of shape (H, W).
+    """
+    union_mask = torch.zeros(size=(H, W))
+    for box in bboxes:
+        x_min, y_min, x_max, y_max = (
+            int(box[0] * W),
+            int(box[1] * H),
+            int(box[2] * W),
+            int(box[3] * H)
+        )
+        union_mask[y_min: y_max, x_min: x_max] = 1  # set inside bounding box to 1
+    
+    return union_mask
+
+def create_background_mask(union_mask):
+    return 1 - union_mask
+
+def compute_special_token_loss(attn_map, sot_idx, eot_idx, union_mask, background_mask):
+    """
+    Compute the contribution to the loss for [SoT] and [EoT] from one attention map.
+    
+    attn_map: Tensor of shape [batch_size, (H*W), num_tokens]
+    sot_idx: int index of [SoT] in token dimension
+    eot_idx: int index of [EoT] in token dimension
+    union_mask, background_mask: (H, W)
+    """
+    b, i, j = attn_map.shape
+    H = W = int(math.sqrt(i))
+
+    # Reshape the attn map for the special tokens [SoT], [EoT]
+    sot_ca_map = attn_map[:, :, sot_idx].reshape(b, H, W)
+    eot_ca_map = attn_map[:, :, eot_idx].reshape(b, H, W)
+
+    # Move masks to same device if needed
+    device = attn_map.device
+    union_mask = union_mask.to(device)
+    background_mask = background_mask.to(device)
+
+    # Calculate activation values
+    # For [EoT] -> union of boxes
+    eot_numerator   = (eot_ca_map * union_mask).reshape(b, -1).sum(dim=-1)
+    eot_denominator = eot_ca_map.reshape(b, -1).sum(dim=-1) + 1e-8
+    eot_activation  = eot_numerator / eot_denominator
+
+    # For [SoT] -> background
+    sot_numerator   = (sot_ca_map * background_mask).reshape(b, -1).sum(dim=-1)
+    sot_denominator = sot_ca_map.reshape(b, -1).sum(dim=-1) + 1e-8
+    sot_activation  = sot_numerator / sot_denominator
+
+    # Example: we want [EoT] to *have* attention in union mask -> activation_value ~ 1
+    #          we want [SoT] to *avoid* objects -> activation_value ~ 1 in background
+    # 
+    # So a typical MSE to push them to 1 could be:
+    #   [EoT] loss: (1 - eot_activation)^2
+    #   [SoT] loss: (1 - sot_activation)^2
+
+    eot_loss = torch.mean((1 - eot_activation)**2)
+    sot_loss = torch.mean((1 - sot_activation)**2)
+
+    return eot_loss + sot_loss
+
 
 def idx2phrase(prompt, indices):
     """
@@ -217,11 +322,10 @@ def visualize_attention_maps(
 
     # Visualize every tokens in the prompt
     tokens = prompt.strip('.').split(' ')
+    tokens = "[SoT]" + tokens + "[EoT]"
 
     if is_all_tokens:
       for idx, token in enumerate(tokens):
-          idx = idx+1 # skip the special token
-
           # Create the directory for saving attention maps if it doesn't exist
           if save_path == "":
               save_dir = f"attention_maps/{token}/{timestep}/"
@@ -275,6 +379,7 @@ def visualize_attention_maps(
           os.makedirs(save_dir, exist_ok=True)
 
           # Visualize and save the attention map for each token in the token_indices
+          # This token index corresponds to the position of the token in the output of the tokenizer
           for token_idx in token_indices:
               attn_prob = attention_map[0, :, token_idx].reshape(height, width)  # Assuming batch size b=1
 

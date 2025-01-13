@@ -5,6 +5,6 @@
 echo "Starting evaluation for MultiDiffusion..."
 
 python -m evaluation.multi_diff \
-    --dataset spatial_prompts \
+    --dataset spatial_prompts
 
 echo "Evaluation completed."

@@ -21,7 +21,7 @@ from MultiDiffusion.region_based import (
 )
 from tqdm import tqdm
 import argparse
-from coco2017.prepare import COCO2017
+from .coco2017.prepare import COCO2017
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """
@@ -93,7 +93,7 @@ def main():
         raise ValueError(f"Dataset {args.dataset} not supported.")
 
     # 1. Setup config/paths
-    save_path = "results/spatial_prompts/multi_diff"
+    save_path = f"results/{args.dataset}/multi_diff"
     os.makedirs(save_path, exist_ok=True)
 
     for (idx, prompt_data) in tqdm(enumerate(prompt_datas), bar_format='{l_bar}{bar} | {n_fmt}/{total_fmt}', total=len(prompt_datas)):

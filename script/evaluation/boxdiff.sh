@@ -5,6 +5,6 @@
 echo "Starting evaluation for BoxDiffusion..."
 
 python -m evaluation.boxdiff \
-    --dataset spatial_prompts \
+    --dataset spatial_prompts
 
 echo "Evaluation completed."

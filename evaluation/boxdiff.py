@@ -19,7 +19,7 @@ from PIL import Image
 
 from tqdm import tqdm
 import argparse
-from coco2017.prepare import COCO2017
+from .coco2017.prepare import COCO2017
 
 # --------- BoxDiff imports ----------
 # modify the import in BoxDiff (to relative path) for 2 files (run_sd_boxdiff.py and pipeline)
@@ -52,26 +52,42 @@ def create_mask_from_bbox(bbox, image_width, image_height):
     return mask
 
 def get_token_indices_for_classes(stable, prompt: str, classes: list[str]):
-    """
-    Return a dict mapping each class in `classes` to the indices of the tokens
-    in `prompt` that contain that class string.
-    """
-    # Encode the prompt using the pipeline's tokenizer.
-    encoded = stable.tokenizer(prompt, add_special_tokens=False)
-    # For human readability, we also get the list of tokens (strings)
-    tokens = stable.tokenizer.convert_ids_to_tokens(encoded["input_ids"])
-    
-    # Prepare a dict to hold token indices for each class
-    class2indices = {cls: [] for cls in classes}
-    
-    # Find token indices for each class
-    for i, token in enumerate(tokens):
-        # Because tokens can be subwords like "cat" vs "ca", "##t", 
-        # do a naive substring check (lowercased).
-        for cls in classes:
-            if cls.lower() in token.lower():
-                class2indices[cls].append(i)
-    
+    # -- 1) Tokenize the prompt (no special tokens) --
+    prompt_enc = stable.tokenizer(prompt, add_special_tokens=False)
+    prompt_tokens = prompt_enc["input_ids"]
+
+    # Prepare the result dict. Enumerate to keep duplicates separate.
+    class2indices = {}
+    for idx, cls in enumerate(classes):
+        unique_key = f"{cls}_{idx}"
+        class2indices[unique_key] = []  # store (start, end) pairs
+
+    # -- 2) For each class, do a sliding-window match in the prompt tokens --
+    i = 0 # non-overlapping index
+    for idx, cls in enumerate(classes):
+        unique_key = f"{cls}_{idx}"
+
+        # Tokenize this class string
+        cls_enc = stable.tokenizer(cls, add_special_tokens=False)
+        cls_tokens = cls_enc["input_ids"]
+        cls_len = len(cls_tokens)
+
+        # Slide over the prompt tokens to find matches
+        while i <= len(prompt_tokens) - cls_len:
+            # Check if the sequence matches
+            if prompt_tokens[i : i + cls_len] == cls_tokens:
+                # Record the start/end of this match
+                start_idx = i
+                end_idx = i + cls_len - 1
+                class2indices[unique_key].append(start_idx)
+
+                # Move past this match (so we can find subsequent matches)
+                i += cls_len
+
+                break
+            else:
+                i += 1
+
     return class2indices
 
 def parse_args():
@@ -121,7 +137,7 @@ def main():
         raise ValueError(f"Dataset {args.dataset} not supported.")
 
     # Setup config/paths
-    save_path = "results/spatial_prompts/boxdiff"
+    save_path = f"results/{args.dataset}/boxdiff"
     os.makedirs(save_path, exist_ok=True)
 
     device = torch.device('cuda')

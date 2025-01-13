@@ -46,7 +46,6 @@ def load_image(image_path):
     """Load image from file."""
     return Image.open(image_path)
 
-def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
     loss = 0
     object_number = len(bboxes)
     if object_number == 0:
@@ -102,14 +101,16 @@ def compute_ca_loss(attn_maps_mid, attn_maps_up, bboxes, object_positions):
 
 def Pharse2idx(prompt, phrases):
     phrases = [x.strip() for x in phrases.split(';')]
-    # prompt_list = prompt.strip('.').replace(',','').replace('\'s', '').split(' ')
     prompt_list = sentence_to_list(prompt)
 
     object_positions = []
     for obj in phrases:
         obj_position = []
+
+        # For multi-token objects (e.g. "wine glass")
         for word in obj.split(' '):
-            obj_first_index = prompt_list.index(word) + 1
+            # Add 1 to match the index in the attention map ([SoT] + words + [EoT])
+            obj_first_index = prompt_list.index(word) + 1 
             obj_position.append(obj_first_index)
         object_positions.append(obj_position)
 
@@ -151,8 +152,6 @@ def draw_box(pil_img, bboxes, phrases, save_path):
             draw.rectangle([int(x_0 * 512), int(y_0 * 512), int(x_1 * 512), int(y_1 * 512)], outline='red', width=5)
             draw.text((int(x_0 * 512) + 5, int(y_0 * 512) + 5), phrase, font=font, fill=(255, 0, 0))
     pil_img.save(save_path)
-
-
 
 def setup_logger(save_path, logger_name):
     logger = logging.getLogger(logger_name)

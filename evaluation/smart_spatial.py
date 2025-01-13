@@ -20,7 +20,7 @@ from dataset.spatial_prompt import (
 )
 from utils import load_image
 from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
-from coco2017.prepare import COCO2017
+from .coco2017.prepare import COCO2017
 
 front_depth_img = load_image("reference_images/depth_maps/front.png")
 behind_depth_img = load_image("reference_images/depth_maps/behind.png")
@@ -52,6 +52,7 @@ def generation_pipeline_spatial_prompt(
     save_path="results/spatial_prompts/smart_spatial",
 
     is_used_attention_guide=True,
+    is_special_token_guide=True,
 
     is_used_controlnet=False,
     is_used_controlnet_term=False,
@@ -84,20 +85,15 @@ def generation_pipeline_spatial_prompt(
     num_tested_images = 0
     root_save_path = save_path
 
-    # Collect all relevant prompt data from specified spatial types
-    spatial_type_prompt_datas = []
-    for spatial_type in spatial_types:
-        spatial_type_prompt_datas += prompt_datas[spatial_type]
-
-    if start_index < 0 or start_index >= len(spatial_type_prompt_datas):
+    if start_index < 0 or start_index >= len(prompt_datas):
         raise ValueError("start_index is out of bounds.")
 
-    end_index = (len(spatial_type_prompt_datas) if num_test == -1 
-                 else min(start_index + num_test, len(spatial_type_prompt_datas)))
+    end_index = (len(prompt_datas) if num_test == -1 
+                 else min(start_index + num_test, len(prompt_datas)))
 
     with tqdm(total=end_index - start_index, desc="Generating Images") as pbar:
         for idx in range(start_index, end_index):
-            data_dict = spatial_type_prompt_datas[idx]
+            data_dict = prompt_datas[idx]
 
             # Basic information
             prompt = data_dict['prompt']
@@ -150,6 +146,7 @@ def generation_pipeline_spatial_prompt(
 
                 # Attention guide
                 is_used_attention_guide=is_used_attention_guide,
+                is_special_token_guide=is_special_token_guide,
 
                 # ControlNet
                 is_used_controlnet=is_used_controlnet,
@@ -226,12 +223,12 @@ def parse_args():
         action="store_true",
         help="Whether to save the generated outputs including attention maps and loss."
     )
-    parser.add_argument(
-        "--save_path",
-        type=str,
-        default="results/spatial_prompts/smart_spatial",
-        help="Directory to save the generated outputs."
-    )
+    # parser.add_argument(
+    #     "--save_path",
+    #     type=str,
+    #     default="results/spatial_prompts/smart_spatial",
+    #     help="Directory to save the generated outputs."
+    # )
     parser.add_argument(
         "--start_index",
         type=int,
@@ -254,6 +251,11 @@ def parse_args():
         "--use_attention_guide",
         action="store_true",
         help="Use attention guidance if provided."
+    )
+    parser.add_argument(
+        "--use_special_token_guide",
+        action="store_true",
+        help="Use attention guidance for special tokens if provided."
     )
     parser.add_argument(
         "--use_controlnet",
@@ -313,9 +315,17 @@ def main():
             "above": prompt_datas_above,
             "below": prompt_datas_below
         }
+
+        # Flatten the prompt_datas
+        all_prompt_datas = []
+        for spatial_type in prompt_datas:
+            all_prompt_datas += prompt_datas[spatial_type]
+
+        prompt_datas = all_prompt_datas
     elif args.dataset == "coco2017":
         coco2017 = COCO2017()
         prompt_datas = coco2017.get_data()
+        print("COCO 2017 dataset preview: ", prompt_datas[:3])
     elif args.dataset == "flikr30k":
         raise NotImplementedError("Flikr30k dataset is not supported yet.")
     else:
@@ -332,9 +342,12 @@ def main():
     # Initialize your pipeline
     smart_spatial = SmartSpatialPipeline(conf, device)
 
-    # Create save directory if not exists
-    if not os.path.exists(args.save_path):
-        os.makedirs(args.save_path)
+    # # Create save directory if not exists
+    # if not os.path.exists(args.save_path):
+    #     os.makedirs(args.save_path)
+
+    save_path = f"results/{args.dataset}/smart_spatial"
+    os.makedirs(save_path, exist_ok=True)
 
     # Example usage of the generation pipeline
     generation_pipeline_spatial_prompt(
@@ -344,9 +357,10 @@ def main():
         is_use_random_seed=args.use_random_seed,
         is_save_simple_result=args.use_save_simple_result,
         is_save_result=args.save_result,
-        save_path=args.save_path,
+        save_path=save_path,
 
         is_used_attention_guide=args.use_attention_guide,
+        is_special_token_guide=args.use_special_token_guide,
 
         is_used_controlnet=args.use_controlnet,
         is_used_controlnet_term=args.use_controlnet_term,

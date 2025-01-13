@@ -12,7 +12,9 @@ from SmartSpatial.utils import (
     save_to_pkl, 
     compute_ca_loss, 
     visualize_attention_maps,
-    convert_bbox_data
+    convert_bbox_data,
+
+    get_special_token_indices
 )
 from utils import Pharse2idx, sentence_to_list, draw_box, setup_logger
 import torch
@@ -77,6 +79,7 @@ class SmartSpatialPipeline():
         save_path="output",
 
         is_used_attention_guide=True,
+        is_special_token_guide=True,
 
         is_used_controlnet=False,
         is_used_controlnet_term=False,
@@ -142,6 +145,9 @@ class SmartSpatialPipeline():
             generator = torch.manual_seed(self.cfg.inference.rand_seed)
         else:
             generator = None
+
+        if is_special_token_guide:
+            sot_idx, eot_idx = get_special_token_indices(self.tokenizer, prompt)
 
         # noise_scheduler = LMSDiscreteScheduler(
         #     beta_start=cfg.noise_schedule.beta_start,
@@ -256,8 +262,12 @@ class SmartSpatialPipeline():
                         is_used_controlnet_term=is_used_controlnet_term,
                         beta=0.3,
                         attn_maps_down_control=attn_down_control,
-                        attn_maps_mid_control=attn_mid_control
+                        attn_maps_mid_control=attn_mid_control,
 
+                        is_special_token_guide=is_special_token_guide,
+                        sot_idx=sot_idx,
+                        eot_idx=eot_idx,
+                        gamma=1
                     ) * self.cfg.inference.loss_scale # scale factor
 
                     # Store the loss for monitoring
@@ -310,16 +320,6 @@ class SmartSpatialPipeline():
                     )
 
                     if is_used_controlnet:
-                        # visualize_attention_maps(
-                        #     attention_maps=attn_down_control[0],
-                        #     prompt=prompt,
-                        #     object_positions=object_positions,
-                        #     timestep=index,
-                        #     is_save_attn_maps=is_save_attn_maps,
-                        #     save_path=f"{save_path}/attention_maps_down_control",
-                        #     is_all_tokens=False
-                        # )
-
                         visualize_attention_maps(
                             attention_maps=attn_mid_control,
                             prompt=prompt,
@@ -439,6 +439,7 @@ class SmartSpatialPipeline():
         save_path="output",
 
         is_used_attention_guide=True,
+        is_special_token_guide=True,
 
         is_used_controlnet=False,
         is_used_controlnet_term=False,
@@ -489,8 +490,11 @@ class SmartSpatialPipeline():
             obj_name = bbox_data['caption']
             objects.append(obj_name)
 
+            
             if obj_name in prompt:
                 objects_in_prompt.append(obj_name)
+
+                # TODO: For multi-token objects (e.g. "hello kitty")
                 bboxes_in_prompt.append(bboxes[idx])
 
 
@@ -537,6 +541,7 @@ class SmartSpatialPipeline():
             save_path=save_path,
 
             is_used_attention_guide=is_used_attention_guide,
+            is_special_token_guide=is_special_token_guide,
 
             is_used_controlnet=is_used_controlnet,
             is_used_controlnet_term=is_used_controlnet_term,

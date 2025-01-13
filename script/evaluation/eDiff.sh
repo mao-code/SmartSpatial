@@ -5,6 +5,6 @@
 echo "Starting evaluation for eDiff..."
 
 python -m evaluation.eDiff \
-    --dataset spatial_prompts \
+    --dataset spatial_prompts
 
 echo "Evaluation completed."

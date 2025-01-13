@@ -43,7 +43,26 @@ class COCO2017:
             "in a snowy field", 
             "at sunset"
         ]
-        self.spatial_relationships = ["front", "behind", "left", "right", "above", "below", "on", "under"]
+        self.simple_spatial_relationships = [
+            "front",
+            "behind",
+            "left",
+            "right",
+            "on",
+            "under",
+            "above",
+            "below"
+        ]
+        self.spatial_relationships = {
+            "front": "in front of", 
+            "behind": "behind", 
+            "left": "to the left of", 
+            "right": "to the right of", 
+            "above": "above", 
+            "below": "below", 
+            "on": "on", 
+            "under": "under"
+        }
        
     def get_data(self):
         """
@@ -66,10 +85,10 @@ class COCO2017:
         count = 0
         while count < limit:
             selected_objects = random.sample(self.cat_names, 2)
-            selected_background = random.sample(self.sup_cat_names, 1)[0]
-            selected_spatial = random.sample(self.spatial_relationships, 1)[0]
+            selected_background = random.sample(self.background_set, 1)[0]
+            selected_spatial = random.sample(self.simple_spatial_relationships, 1)[0]
 
-            prompt = f"A {selected_objects[0]} is {selected_spatial} a {selected_objects[1]} {selected_background}."
+            prompt = f"A {selected_objects[0]} is {self.spatial_relationships[selected_spatial]} a {selected_objects[1]} {selected_background}."
 
             if prompt in seen_prompt:
                 continue
