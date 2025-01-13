@@ -50,7 +50,7 @@ def create_mask_from_bbox(bbox, image_width, image_height):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run BoxDiffusion"
+        description="Run eDiff"
     )
 
     parser.add_argument(

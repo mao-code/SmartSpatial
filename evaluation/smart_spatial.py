@@ -224,7 +224,7 @@ def parse_args():
     parser.add_argument(
         "--save_result",
         action="store_true",
-        help="Whether to save the generated outputs."
+        help="Whether to save the generated outputs including attention maps and loss."
     )
     parser.add_argument(
         "--save_path",
@@ -369,20 +369,12 @@ if __name__ == "__main__":
     main()
 
     """
-        Test Case:
-            - SD+Ours
-            - SD+AG
-    """
-    
-    """
         Example usage:
-            python -m script.spatial_prompts.generation.smart_spatial \
+            python -m evaluation.smart_spatial \
+            --dataset spatial_prompts \
             --config_path conf/base_config.yaml \
             --use_random_seed \
             --use_save_simple_result \
-            --start_index 0 \
-            --num_test -1 \
-            --save_every 20 \
             --use_attention_guide \
             --use_controlnet \
             --use_controlnet_term \
