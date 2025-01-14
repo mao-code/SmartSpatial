@@ -99,86 +99,87 @@ def run_iou_clip(
 ):
     results_list = []
     global_idx = 0
-    for position, prompt_data_list in prompt_datas.items():
+
+    for idx, data in enumerate(prompt_datas):
+        position = data['prompt_meta']['objects'][0]['pos']
         bbox_refs = bbox_ref_mapping[position]
 
-        for idx, data in enumerate(prompt_data_list):
-            image_path = image_paths[global_idx]  # Ensure images are ordered correctly
+        image_path = image_paths[global_idx]  # Ensure images are ordered correctly
 
-            center_name = data['prompt_meta']['center']
-            obj_name = data['prompt_meta']['objects'][0]['obj']
+        center_name = data['prompt_meta']['center']
+        obj_name = data['prompt_meta']['objects'][0]['obj']
 
-            # Load image
-            image = Image.open(image_path).convert('RGB')
+        # Load image
+        image = Image.open(image_path).convert('RGB')
 
-            # Object detection using YOLOv8
-            detections = yolo(image_path, verbose=False)
-            detection = detections[0]
-            boxes = detection.boxes.xyxy.cpu().numpy()  # Detected bounding boxes
-            scores = detection.boxes.conf.cpu().numpy()  # Confidence scores
-            labels = detection.boxes.cls.cpu().numpy().astype(int)  # Class labels
+        # Object detection using YOLOv8
+        detections = yolo(image_path, verbose=False)
+        detection = detections[0]
+        boxes = detection.boxes.xyxy.cpu().numpy()  # Detected bounding boxes
+        scores = detection.boxes.conf.cpu().numpy()  # Confidence scores
+        labels = detection.boxes.cls.cpu().numpy().astype(int)  # Class labels
 
-            # Map labels to class names
-            class_names = yolo.names  # Mapping from class indices to names
+        # Map labels to class names
+        class_names = yolo.names  # Mapping from class indices to names
 
-            detected_objects = []
-            for box, score, label in zip(boxes, scores, labels):
-                class_name = class_names[label]
-                detected_objects.append({
-                    'caption': class_name,
-                    'box': box,  # [x1, y1, x2, y2]
-                    'score': score
-                })
-
-            # Get ground truth boxes
-            gt_boxes = []
-            for ref in bbox_refs:
-                caption = ref['caption']
-                caption = center_name if caption == "box" else obj_name
-
-                box = ref['box']
-                x1 = box['x']
-                y1 = box['y']
-                x2 = x1 + box['w']
-                y2 = y1 + box['h']
-
-                gt_boxes.append({
-                    'caption': caption,
-                    'box': np.array([x1, y1, x2, y2])
-                })
-
-            # Compute per-class AP and collect IoUs
-            ap_dict, iou_list = compute_ap_per_class(gt_boxes, detected_objects, iou_threshold=0.5)
-            # Compute per-image mAP
-            per_image_map = np.mean(list(ap_dict.values())) if ap_dict else 0.0
-            # Compute per-image mean IoU
-            per_image_mean_iou = np.mean(iou_list) if iou_list else 0.0
-
-            # CLIP score computation
-            image_input = preprocess(image).unsqueeze(0).to(device)
-            text_input = clip.tokenize([data['prompt']]).to(device)
-
-            with torch.no_grad():
-                image_features = clip_model.encode_image(image_input)
-                text_features = clip_model.encode_text(text_input)
-
-            # Normalize features
-            image_features /= image_features.norm(dim=-1, keepdim=True)
-            text_features /= text_features.norm(dim=-1, keepdim=True)
-
-            # Compute cosine similarity
-            clip_score = (image_features @ text_features.T).cpu().item()
-
-            # Store results
-            results_list.append({
-                'image_path': image_path,
-                'position': position,
-                'per_image_map': per_image_map,
-                'per_image_mean_iou': per_image_mean_iou,
-                'clip_score': clip_score
+        detected_objects = []
+        for box, score, label in zip(boxes, scores, labels):
+            class_name = class_names[label]
+            detected_objects.append({
+                'caption': class_name,
+                'box': box,  # [x1, y1, x2, y2]
+                'score': score
             })
 
-            global_idx += 1
+        # Get ground truth boxes
+        gt_boxes = []
+        for ref in bbox_refs:
+            caption = ref['caption']
+            caption = center_name if caption == "box" else obj_name
+
+            box = ref['box']
+            x1 = box['x']
+            y1 = box['y']
+            x2 = x1 + box['w']
+            y2 = y1 + box['h']
+
+            gt_boxes.append({
+                'caption': caption,
+                'box': np.array([x1, y1, x2, y2])
+            })
+
+        # Compute per-class AP and collect IoUs
+        ap_dict, iou_list = compute_ap_per_class(gt_boxes, detected_objects, iou_threshold=0.5)
+        # Compute per-image mAP
+        per_image_map = np.mean(list(ap_dict.values())) if ap_dict else 0.0
+        # Compute per-image mean IoU
+        per_image_mean_iou = np.mean(iou_list) if iou_list else 0.0
+
+        # CLIP score computation
+        image_input = preprocess(image).unsqueeze(0).to(device)
+        text_input = clip.tokenize([data['prompt']]).to(device)
+
+        with torch.no_grad():
+            image_features = clip_model.encode_image(image_input)
+            text_features = clip_model.encode_text(text_input)
+
+        # Normalize features
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+
+        # Compute cosine similarity
+        clip_score = (image_features @ text_features.T).cpu().item()
+
+        # Store results
+        results_list.append({
+            'image_path': image_path,
+            'position': position,
+            'per_image_map': per_image_map,
+            'per_image_mean_iou': per_image_mean_iou,
+            'clip_score': clip_score
+        })
+
+        global_idx += 1
 
     return results_list
 

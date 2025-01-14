@@ -146,6 +146,7 @@ class SmartSpatialPipeline():
         else:
             generator = None
 
+        sot_idx, eot_idx = None, None
         if is_special_token_guide:
             sot_idx, eot_idx = get_special_token_indices(self.tokenizer, prompt)
 
@@ -384,7 +385,7 @@ class SmartSpatialPipeline():
                 latents = noise_scheduler.step(noise_pred, t, latents).prev_sample
                 torch.cuda.empty_cache()
 
-                if is_save_attn_maps and not is_used_attention_guide and index % 10 == 0:
+                if is_save_attn_maps and is_used_attention_guide and index % 10 == 0:
                     # Visualize the attention map without guidance
                     visualize_attention_maps(
                         attention_maps=attn_map_integrated_mid,

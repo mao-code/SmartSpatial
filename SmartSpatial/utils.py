@@ -27,6 +27,7 @@ def compute_ca_loss(
 ):
     loss = 0
     controlnet_loss = 0
+    special_token_total_loss = 0
 
     object_number = len(bboxes)
 
@@ -124,6 +125,8 @@ def compute_ca_loss(
             )
             special_token_loss += st_loss
 
+        special_token_total_loss += special_token_loss
+
     if is_used_controlnet_term:
       # For attention maps mid
       for attn_map_integrated in attn_maps_mid_control:
@@ -165,7 +168,7 @@ def compute_ca_loss(
     if not is_special_token_guide:
         gamma = 0
 
-    total_loss = alpha*loss + beta*controlnet_loss + gamma*special_token_loss
+    total_loss = alpha*loss + beta*controlnet_loss + gamma*special_token_total_loss
 
     return total_loss
 
@@ -322,7 +325,7 @@ def visualize_attention_maps(
 
     # Visualize every tokens in the prompt
     tokens = prompt.strip('.').split(' ')
-    tokens = "[SoT]" + tokens + "[EoT]"
+    tokens = ["[SoT]"] + tokens + ["[EoT]"]
 
     if is_all_tokens:
       for idx, token in enumerate(tokens):
@@ -401,6 +404,50 @@ def visualize_attention_maps(
                 plt.savefig(token_save_path)
               plt.close()
               # print(f'Attention map for token "{token}" (index: {token_idx}) saved at: {token_save_path}')
+
+          # Upscaling attention map
+          if is_save_attn_maps:
+            upscale_and_save_attention_map(
+                attn_prob_array,
+                prompt,
+                token,
+                timestep,
+                target_size=(512, 512),
+                save_dir=f"{save_path}_upscale"
+            )
+
+      # for special tokens
+      for idx, token in enumerate(tokens):
+          if idx != 0 and idx != len(tokens) - 1:
+            continue  
+        
+          # Create the directory for saving attention maps if it doesn't exist
+          if save_path == "":
+              save_dir = f"attention_maps/{token}/{timestep}/"
+          else:
+              save_dir = os.path.join(save_path, f"{token}/{timestep}/")
+          os.makedirs(save_dir, exist_ok=True)
+
+          attn_prob = attention_map[0, :, idx].reshape(height, width)  # Assuming batch size b=1
+
+          # Set the individual save path for each token attention map
+          token_save_path = os.path.join(save_dir, f"token_{idx}.png")
+
+          # make sure the attn_prob be moved to cpu and convert to numpy
+          attn_prob_array = attn_prob.cpu().detach().numpy()
+
+          # Plot the attention probabilities as a heatmap
+          plt.figure(figsize=(6, 6))
+          plt.imshow(attn_prob_array, cmap='viridis', interpolation='nearest')
+          # plt.colorbar(label='Attention Probability')
+          plt.title(f'"{token}"')
+          plt.axis('off')  # Optionally, you can remove the axis ticks and labels
+
+          # Save the figure
+          if is_save_attn_maps:
+            plt.savefig(token_save_path)
+          plt.close()
+          # print(f'Attention map for token "{token}" (index: {idx}) saved at: {token_save_path}')
 
           # Upscaling attention map
           if is_save_attn_maps:
@@ -566,5 +613,8 @@ def numpy_to_pt(images):
     return images
 
 def save_to_pkl(data, path):
-  with open(path, 'wb') as pickle_file:
-    pickle.dump(data, pickle_file)
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+
+    with open(path, 'wb') as pickle_file:
+        pickle.dump(data, pickle_file)

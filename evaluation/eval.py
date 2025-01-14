@@ -17,6 +17,7 @@ from eval_utils import (
 
 import os
 import argparse
+from .coco2017.prepare import COCO2017
 
 prompt_datas = {
     "front": prompt_datas_front,
@@ -40,6 +41,13 @@ def parse_args():
         help="Path to the result image files."
     )
 
+    parser.add_argument(
+        "--dataset",
+        choices=["spatial_prompts", "coco2017", "flikr30k"],
+        default="spatial_prompts",
+        help="Types of dataset to generate images"
+    )
+
     return parser.parse_args()
 
 def main():
@@ -52,6 +60,33 @@ def main():
         for file in os.listdir(img_root_path)
         if file.lower().endswith(valid_extensions)
     ]
+
+    prompt_datas = None
+    if args.dataset == "spatial_prompts":
+        prompt_datas = {
+            "front": prompt_datas_front,
+            "behind": prompt_datas_behind,
+            "left": prompt_datas_left,
+            "right": prompt_datas_right,
+            "on": prompt_datas_on,
+            "under": prompt_datas_under,
+            "above": prompt_datas_above,
+            "below": prompt_datas_below
+        }
+
+        # Flatten the prompt_datas
+        all_prompt_datas = []
+        for spatial_type in prompt_datas:
+            all_prompt_datas += prompt_datas[spatial_type]
+
+        prompt_datas = all_prompt_datas
+    elif args.dataset == "coco2017":
+        coco2017 = COCO2017()
+        prompt_datas = coco2017.get_data()
+    elif args.dataset == "flikr30k":
+        raise NotImplementedError("Flikr30k dataset is not supported yet.")
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported.")
 
     # Orders Matter !!!
     sorted_paths = sorted(image_paths, key=lambda x: int(x.split('/')[-1].split('_')[0]))

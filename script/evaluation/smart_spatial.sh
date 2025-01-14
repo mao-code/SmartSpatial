@@ -13,6 +13,7 @@ echo "Starting evaluation for SmartSpatial..."
 
 python -m evaluation.smart_spatial \
     --dataset spatial_prompts \
+    --save_path results/spatial_prompts/smart_spatial \
     --config_path conf/base_config.yaml \
     --use_random_seed \
     --use_save_simple_result \

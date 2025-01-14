@@ -142,6 +142,7 @@ def generation_pipeline_spatial_prompt(
                 # Save logic
                 is_save_images=is_save_result,
                 is_save_losses=is_save_result,
+                is_save_attn_maps=is_save_result,
                 save_path=current_save_path,
 
                 # Attention guide
@@ -223,12 +224,12 @@ def parse_args():
         action="store_true",
         help="Whether to save the generated outputs including attention maps and loss."
     )
-    # parser.add_argument(
-    #     "--save_path",
-    #     type=str,
-    #     default="results/spatial_prompts/smart_spatial",
-    #     help="Directory to save the generated outputs."
-    # )
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        default="results/spatial_prompts/smart_spatial",
+        help="Directory to save the generated outputs."
+    )
     parser.add_argument(
         "--start_index",
         type=int,
@@ -342,12 +343,12 @@ def main():
     # Initialize your pipeline
     smart_spatial = SmartSpatialPipeline(conf, device)
 
-    # # Create save directory if not exists
-    # if not os.path.exists(args.save_path):
-    #     os.makedirs(args.save_path)
+    # Create save directory if not exists
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
 
-    save_path = f"results/{args.dataset}/smart_spatial"
-    os.makedirs(save_path, exist_ok=True)
+    # save_path = f"results/{args.dataset}/smart_spatial"
+    # os.makedirs(save_path, exist_ok=True)
 
     # Example usage of the generation pipeline
     generation_pipeline_spatial_prompt(
@@ -357,7 +358,7 @@ def main():
         is_use_random_seed=args.use_random_seed,
         is_save_simple_result=args.use_save_simple_result,
         is_save_result=args.save_result,
-        save_path=save_path,
+        save_path=args.save_path,
 
         is_used_attention_guide=args.use_attention_guide,
         is_special_token_guide=args.use_special_token_guide,
