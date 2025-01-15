@@ -1,4 +1,8 @@
-from utils import bbox_ref_mapping
+from SmartSpatialEval import SmartSpatialEvalPipeline
+from omegaconf import OmegaConf
+import os
+import argparse
+
 from dataset.spatial_prompt import (
     prompt_datas_front,
     prompt_datas_behind,
@@ -9,26 +13,13 @@ from dataset.spatial_prompt import (
     prompt_datas_above,
     prompt_datas_below
 )
-
-from eval_utils import (
-    run_iou_clip,
-    average_results
-)
-
-import os
-import argparse
 from .coco2017.prepare import COCO2017
 
-prompt_datas = {
-    "front": prompt_datas_front,
-    "behind": prompt_datas_behind,
-    "left": prompt_datas_left,
-    "right": prompt_datas_right,
-    "on": prompt_datas_on,
-    "under": prompt_datas_under,
-    "above": prompt_datas_above,
-    "below": prompt_datas_below
-}
+import torch
+
+from evaluation.eval_utils import (
+    compute_statistics
+)
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -51,6 +42,10 @@ def parse_args():
     return parser.parse_args()
 
 def main():
+    conf = OmegaConf.load(args.config_path)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    smart_spatial_eval = SmartSpatialEvalPipeline(conf, device)
+
     args = parse_args()
     img_root_path = args.img_root_path
     valid_extensions = ('.png', '.jpg', '.jpeg')
@@ -91,19 +86,25 @@ def main():
     # Orders Matter !!!
     sorted_paths = sorted(image_paths, key=lambda x: int(x.split('/')[-1].split('_')[0]))
 
-    results_list = run_iou_clip(sorted_paths, prompt_datas, bbox_ref_mapping)
-    avg_iou, avg_map, avg_clip_score = average_results(results_list)
+    smart_spatial_data = smart_spatial_eval.evaluate(sorted_paths, prompt_datas)
 
-    print(f"""
-    ---------------------------------------
-    Total Images Number: {len(sorted_paths)}
-    Total Results Calculated: {len(results_list)}
-    Evaluation Results for {img_root_path}:
-        - Average per-image mean IoU: {avg_iou:.4f}
-        - Average per-image mAP@0.5: {avg_map:.4f}
-        - Average CLIP score: {avg_clip_score:.4f}
-    ---------------------------------------
-    """)    
+    stats = {}
+    numeric_cols = ["D+O", "D", "O", "SR"]  # columns you want stats for
+    
+    for col in numeric_cols:
+        mean_val, std_val, ci_lower, ci_upper = compute_statistics(smart_spatial_data[col].values, confidence=0.95)
+        stats[col] = {
+            "mean": mean_val,
+            "std_dev": std_val,
+            "ci_95_lower": ci_lower,
+            "ci_95_upper": ci_upper
+        }
 
-if __name__ == "__main__":
-    main()
+    print("=== Results DataFrame ===")
+    print(smart_spatial_data)
+
+    print("\n=== Summary Stats ===")
+    for metric_name, info in stats.items():
+        print(f"{metric_name} => mean: {info['mean']:.4f}, "
+            f"std: {info['std_dev']:.4f}, "
+            f"95% CI: [{info['ci_95_lower']:.4f}, {info['ci_95_upper']:.4f}]")

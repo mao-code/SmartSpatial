@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import clip
 from collections import defaultdict
+import scipy.stats
 
 # Load YOLOv8 model
 yolo = YOLO('yolov8x.pt')
@@ -200,3 +201,23 @@ def average_results(results_list):
     # print(f'Average CLIP score: {avg_clip_score:.4f}')
 
     return avg_iou, avg_map, avg_clip_score
+
+def compute_statistics(values, confidence=0.95):
+    """Compute mean, std, and the confidence interval (two-sided) for a list of values."""
+    arr = np.array(values)
+    mean_val = np.mean(arr)
+    std_val = np.std(arr, ddof=1)  # sample standard deviation
+
+    n = len(arr)
+    if n > 1:
+        # t-distribution critical value
+        alpha = 1 - confidence
+        t_crit = scipy.stats.t.ppf(1 - alpha/2, n - 1)
+        margin_of_error = t_crit * (std_val / np.sqrt(n))
+        ci_lower = mean_val - margin_of_error
+        ci_upper = mean_val + margin_of_error
+    else:
+        # Not enough data to compute CI
+        ci_lower, ci_upper = mean_val, mean_val
+
+    return mean_val, std_val, ci_lower, ci_upper
