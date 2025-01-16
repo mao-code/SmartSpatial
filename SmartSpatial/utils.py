@@ -262,7 +262,6 @@ def compute_special_token_loss(attn_map, sot_idx, eot_idx, union_mask, backgroun
 
     return eot_loss + sot_loss
 
-
 def idx2phrase(prompt, indices):
     """
     Retrieve the phrase from a prompt based on the provided indices.
