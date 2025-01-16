@@ -6,171 +6,271 @@ import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
+from torch.nn.utils import clip_grad_norm_
 
 def compute_ca_loss(
     attn_maps_mid, # List of tensors
     attn_maps_up,  # List of tensors
     bboxes,
     object_positions,
-    position_word_indices=[],
     alpha=1,
 
     is_used_controlnet_term=False,
     beta=0.3, # Controlnet term loss weight
-    attn_maps_down_control=None,
     attn_maps_mid_control=None,
 
-    is_special_token_guide=True,
+    is_special_token_guide=False,
     sot_idx=None,
     eot_idx=None,
-    gamma=0.5 # Special token term loss weight
+    gamma=0.5, # Special token term loss weight
+
+    # --- Regularization Flags and Weights ---
+    # 1) Stay-Close to original attention
+    is_stay_close=False,
+    stay_close_weight=0.1,
+    # Originals for UNet
+    orig_attn_maps_mid=None,
+    orig_attn_maps_up=None,
+    # Originals for ControlNet
+    orig_attn_maps_mid_control=None,
+
+    # 2) Smoothness (e.g. total variation)
+    is_smoothness=False,
+    smoothness_weight=0.01
 ):
-    loss = 0
-    controlnet_loss = 0
-    special_token_total_loss = 0
+    """
+    Optional regularizations:
+      - 'Stay Close': Encourages new attention to remain close to original/previous attention
+      - 'Smoothness': Encourages spatial smoothness in attention maps
+      - 'Gradient Clipping': Restricts the gradient norm to avoid large updates (commonly done outside)
+    """
+
+    # -----------------------
+    # Base cross-attention loss
+    # -----------------------
+    device = attn_maps_mid[0].device if len(attn_maps_mid) > 0 else 'cpu'
+    loss = torch.tensor(0.0, device=device)
+    controlnet_loss = torch.tensor(0.0, device=device)
+    special_token_total_loss = torch.tensor(0.0, device=device)
 
     object_number = len(bboxes)
-
     if object_number == 0:
-        return torch.tensor(0).float().cuda() if torch.cuda.is_available() else torch.tensor(0).float()
-
-    # For attention maps mid
+        return loss  # Zero
+    
+    # =============== Mid-Block Loss ===============
     for attn_map_integrated in attn_maps_mid:
-        attn_map = attn_map_integrated
-        b, i, j = attn_map.shape # batch, i(HxW), j(tokens)
-        H = W = int(math.sqrt(i))
-
-        ###### Loss for Objects ######
-        for obj_idx in range(object_number):
-            obj_loss = 0
-
-            mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
-
-            ###### Object mask ######
-            for obj_box in bboxes[obj_idx]:
-                x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
-                    int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
-                mask[y_min: y_max, x_min: x_max] = 1
-
-            ###### Loss Calculation ######
-            # For multi-token objects (e.g. "wine glass"), we use the same object bbox mask.
-            for obj_position in object_positions[obj_idx]:
-                ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
-                activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1)/ca_map_obj.reshape(b, -1).sum(dim=-1)
-
-                obj_loss += torch.mean((1 - activation_value) ** 2)
-
-            loss += (obj_loss/len(object_positions[obj_idx])) 
-
-    # For attention maps up
-    for attn_map_integrated in attn_maps_up[0]: # first up block
-        attn_map = attn_map_integrated
-
+        attn_map = attn_map_integrated  # shape: (b, h*w, tokens)
         b, i, j = attn_map.shape
         H = W = int(math.sqrt(i))
 
+        # For each object's bounding box
         for obj_idx in range(object_number):
-            obj_loss = 0
+            obj_loss = 0.0
 
-            mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
+            # Create bounding box mask
+            mask = torch.zeros(size=(H, W), device=device)
             for obj_box in bboxes[obj_idx]:
                 x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
-                    int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
+                                             int(obj_box[1] * H), \
+                                             int(obj_box[2] * W), \
+                                             int(obj_box[3] * H)
                 mask[y_min: y_max, x_min: x_max] = 1
 
+            # For each token that composes the object
             for obj_position in object_positions[obj_idx]:
                 ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
-                # ca_map_obj = attn_map[:, :, object_positions[obj_position]].reshape(b, H, W)
-
-                activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1) / ca_map_obj.reshape(b, -1).sum(
-                    dim=-1)
-
+                activation_value = (ca_map_obj * mask).view(b, -1).sum(dim=-1) / ca_map_obj.view(b, -1).sum(dim=-1)
                 obj_loss += torch.mean((1 - activation_value) ** 2)
 
             loss += (obj_loss / len(object_positions[obj_idx]))
 
-    ##### Loss for Special Tokens #####
+    # =============== Up-Block Loss (only first up-block) ===============
+    if len(attn_maps_up) > 0:
+        for attn_map_integrated in attn_maps_up[0]:
+            attn_map = attn_map_integrated
+            b, i, j = attn_map.shape
+            H = W = int(math.sqrt(i))
+
+            for obj_idx in range(object_number):
+                obj_loss = 0.0
+
+                mask = torch.zeros(size=(H, W), device=device)
+                for obj_box in bboxes[obj_idx]:
+                    x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
+                                                 int(obj_box[1] * H), \
+                                                 int(obj_box[2] * W), \
+                                                 int(obj_box[3] * H)
+                    mask[y_min: y_max, x_min: x_max] = 1
+
+                for obj_position in object_positions[obj_idx]:
+                    ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
+                    activation_value = (ca_map_obj * mask).view(b, -1).sum(dim=-1) / ca_map_obj.view(b, -1).sum(dim=-1)
+                    obj_loss += torch.mean((1 - activation_value) ** 2)
+
+                loss += (obj_loss / len(object_positions[obj_idx]))
+
+    # =============== Special Token Loss ===============
     if is_special_token_guide and (sot_idx is not None) and (eot_idx is not None):
-        # 1. Create union mask (and background mask) once
-        device = attn_maps_mid[0].device
+        # 1) Create union / background masks
         b, i, j = attn_maps_mid[0].shape
         H = W = int(math.sqrt(i))
-        union_mask = create_union_mask(
-            [box for sublist in bboxes for box in [sublist]]  # flatten if needed
-            if isinstance(bboxes[0], list) else bboxes,
-            H, W
-        ).to(device)
+        union_mask = create_union_mask(bboxes, H, W).to(device)
         background_mask = create_background_mask(union_mask).to(device)
 
-        # 2. Compute special token loss on mid block maps
+        # 2) Compute special token loss on mid blocks
         special_token_loss = 0.0
         for attn_map_integrated in attn_maps_mid:
             st_loss = compute_special_token_loss(
-                attn_map_integrated,
-                sot_idx,
-                eot_idx,
-                union_mask,
-                background_mask
+                attn_map_integrated, sot_idx, eot_idx,
+                union_mask, background_mask
             )
             special_token_loss += st_loss
 
-        # 3. Compute special token loss on up block maps
-        for attn_map_integrated in attn_maps_up[0]:  # or however you want to iterate
-            st_loss = compute_special_token_loss(
-                attn_map_integrated,
-                sot_idx,
-                eot_idx,
-                union_mask,
-                background_mask
-            )
-            special_token_loss += st_loss
+        # 3) Compute special token loss on up blocks
+        if len(attn_maps_up) > 0:
+            for attn_map_integrated in attn_maps_up[0]:
+                st_loss = compute_special_token_loss(
+                    attn_map_integrated, sot_idx, eot_idx,
+                    union_mask, background_mask
+                )
+                special_token_loss += st_loss
 
         special_token_total_loss += special_token_loss
 
-    if is_used_controlnet_term:
-      # For attention maps mid
-      for attn_map_integrated in attn_maps_mid_control:
-          attn_map = attn_map_integrated
-          b, i, j = attn_map.shape # batch, i(HxW), j(tokens)
-          H = W = int(math.sqrt(i))
+    # =============== ControlNet term ===============
+    if is_used_controlnet_term and (attn_maps_mid_control is not None):
+        for attn_map_integrated in attn_maps_mid_control:
+            attn_map = attn_map_integrated
+            b, i, j = attn_map.shape
+            H = W = int(math.sqrt(i))
 
-          ###### Loss for Objects ######
-          for obj_idx in range(object_number):
-            obj_loss = 0
+            for obj_idx in range(object_number):
+                obj_loss = 0.0
 
-            mask = torch.zeros(size=(H, W)).cuda() if torch.cuda.is_available() else torch.zeros(size=(H, W))
+                mask = torch.zeros(size=(H, W), device=device)
+                for obj_box in bboxes[obj_idx]:
+                    x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
+                                                 int(obj_box[1] * H), \
+                                                 int(obj_box[2] * W), \
+                                                 int(obj_box[3] * H)
+                    mask[y_min: y_max, x_min: x_max] = 1
 
-            ###### Object mask ######
-            for obj_box in bboxes[obj_idx]:
+                for obj_position in object_positions[obj_idx]:
+                    ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
+                    activation_value = (ca_map_obj * mask).view(b, -1).sum(dim=-1) / ca_map_obj.view(b, -1).sum(dim=-1)
+                    obj_loss += torch.mean((1 - activation_value) ** 2)
 
-                x_min, y_min, x_max, y_max = int(obj_box[0] * W), \
-                    int(obj_box[1] * H), int(obj_box[2] * W), int(obj_box[3] * H)
-                mask[y_min: y_max, x_min: x_max] = 1
+                controlnet_loss += (obj_loss / len(object_positions[obj_idx]))
 
-            ###### Loss Calculation ######
-            for obj_position in object_positions[obj_idx]:
-                ca_map_obj = attn_map[:, :, obj_position].reshape(b, H, W)
-                activation_value = (ca_map_obj * mask).reshape(b, -1).sum(dim=-1)/ca_map_obj.reshape(b, -1).sum(dim=-1)
+    # -----------------------
+    # Averaging baseline loss
+    # -----------------------
+    num_mid_maps = len(attn_maps_mid)
+    num_up_maps_first = len(attn_maps_up[0]) if len(attn_maps_up) > 0 else 0
+    base_divisor = object_number * (num_mid_maps + num_up_maps_first)
 
-                obj_loss += torch.mean((1 - activation_value) ** 2)
+    if base_divisor > 0:
+        loss = loss / base_divisor
 
-            controlnet_loss += (obj_loss/len(object_positions[obj_idx]))
+    if is_used_controlnet_term and (attn_maps_mid_control is not None):
+        # If you have more control net layers, adjust the divisor as needed
+        controlnet_loss = controlnet_loss / len(attn_maps_mid_control)
+    else:
+        beta = 0.0
 
-    # Average the losses (total number of attention maps)
-    loss = loss / (object_number * (len(attn_maps_up[0]) + len(attn_maps_mid)))
-    if is_used_controlnet_term:
-      # controlnet_loss = controlnet_loss / (len(attn_maps_down_control[0]) + len(attn_maps_mid_control))
-      controlnet_loss = controlnet_loss / len(attn_maps_mid_control)
-
-    # Add new terms to the total loss
-    if not is_used_controlnet_term:
-        beta = 0
     if not is_special_token_guide:
-        gamma = 0
+        gamma = 0.0
 
-    total_loss = alpha*loss + beta*controlnet_loss + gamma*special_token_total_loss
+    # -------------------------------------------------------
+    # "Stay Close" Regularization (UNet + ControlNet)
+    # -------------------------------------------------------
+    stay_close_total = torch.tensor(0.0, device=device)
+
+    if is_stay_close:
+        # --- Stay close for UNet mid ---
+        if (orig_attn_maps_mid is not None) and (len(orig_attn_maps_mid) == len(attn_maps_mid)):
+            for curr_map, orig_map in zip(attn_maps_mid, orig_attn_maps_mid):
+                stay_close_total += stay_close_loss(curr_map, orig_map)
+
+        # --- Stay close for UNet up (just first up-block for example) ---
+        if (orig_attn_maps_up is not None) and len(orig_attn_maps_up) > 0 \
+           and len(attn_maps_up) > 0 and len(attn_maps_up[0]) > 0:
+            up_block_curr = attn_maps_up[0]
+            up_block_orig = orig_attn_maps_up[0]
+            for curr_map, orig_map in zip(up_block_curr, up_block_orig):
+                stay_close_total += stay_close_loss(curr_map, orig_map)
+
+        # --- Stay close for ControlNet mid (if enabled) ---
+        if is_used_controlnet_term and (orig_attn_maps_mid_control is not None) \
+           and (attn_maps_mid_control is not None) \
+           and (len(orig_attn_maps_mid_control) == len(attn_maps_mid_control)):
+            for curr_map, orig_map in zip(attn_maps_mid_control, orig_attn_maps_mid_control):
+                stay_close_total += stay_close_loss(curr_map, orig_map)
+
+    stay_close_total = stay_close_weight * stay_close_total
+
+    # -------------------------------------------------------
+    # "Smoothness" Regularization (UNet + ControlNet)
+    # -------------------------------------------------------
+    smoothness_total = torch.tensor(0.0, device=device)
+
+    if is_smoothness:
+        # ---- Smoothness for UNet mid ----
+        for attn_map_integrated in attn_maps_mid:
+            b, hw, t = attn_map_integrated.shape
+            H = W = int(math.sqrt(hw))
+            # sum over tokens
+            for token_idx in range(t):
+                attn_map_token = attn_map_integrated[:, :, token_idx].reshape(b, H, W)
+                smoothness_total += total_variation_loss(attn_map_token)
+
+        # ---- Smoothness for UNet up (first block) ----
+        if len(attn_maps_up) > 0 and len(attn_maps_up[0]) > 0:
+            for attn_map_integrated in attn_maps_up[0]:
+                b, hw, t = attn_map_integrated.shape
+                H = W = int(math.sqrt(hw))
+                for token_idx in range(t):
+                    attn_map_token = attn_map_integrated[:, :, token_idx].reshape(b, H, W)
+                    smoothness_total += total_variation_loss(attn_map_token)
+
+        # ---- Smoothness for ControlNet mid (if enabled) ----
+        if is_used_controlnet_term and (attn_maps_mid_control is not None):
+            for attn_map_integrated in attn_maps_mid_control:
+                b, hw, t = attn_map_integrated.shape
+                H = W = int(math.sqrt(hw))
+                for token_idx in range(t):
+                    attn_map_token = attn_map_integrated[:, :, token_idx].reshape(b, H, W)
+                    smoothness_total += total_variation_loss(attn_map_token)
+
+    smoothness_total = smoothness_weight * smoothness_total    
+
+    # -------------------------------------------------------
+    # Combine everything
+    # -------------------------------------------------------
+    total_loss = alpha * loss + beta * controlnet_loss + gamma * special_token_total_loss
+    total_loss += stay_close_total
+    total_loss += smoothness_total
 
     return total_loss
+
+def total_variation_loss(attn_map):
+    """
+    A simple total variation regularization for smoothness.
+    attn_map shape: (b, h, w)
+    """
+    # Horizontal and vertical differences
+    loss = torch.mean(torch.abs(attn_map[:, :, :-1] - attn_map[:, :, 1:])) + \
+           torch.mean(torch.abs(attn_map[:, :-1, :] - attn_map[:, 1:, :]))
+    return loss
+
+def stay_close_loss(current_attn, orig_attn):
+    """
+    L2 difference between the current attention map and the original.
+    Both shapes: (b, h*w, tokens) or (b, h, w).
+    Adapt as needed if shapes differ.
+    """
+    return F.mse_loss(current_attn, orig_attn)
 
 def get_special_token_indices(tokenizer, prompt):
     """

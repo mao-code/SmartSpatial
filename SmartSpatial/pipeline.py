@@ -64,54 +64,47 @@ class SmartSpatialPipeline():
 
     def inference(
         self,
-
         prompt,
         bboxes,
         phrases,
-
         center,
         position,
-
         logger,
-
         is_save_attn_maps=False,
         is_save_losses=False,
         save_path="output",
 
         is_used_attention_guide=True,
-        is_special_token_guide=True,
+        is_special_token_guide=False,
 
         is_used_controlnet=False,
         is_used_controlnet_term=False,
         control_image=None,
-        controlnet_scale = 0.2,
+        controlnet_scale=0.2,
 
         is_used_momentum=False,
-        momentum = 0.5,
+        momentum=0.5,
 
-        is_used_salt=False,
-        prompt_data=None,
-        obj_set=None,
-        bg_set=None,
-        bbox_ref_mapping=None,
+        is_stay_close=False,
+        stay_close_weight=0.1,
+ 
+        is_smoothness=False,
+        smoothness_weight=0.01,
+
+        is_grad_clipping=False,
+        grad_clip_threshold=1.0,
 
         is_random_seed=False,
-
         negative_prompt=""
     ):
         logger.info("Inference")
         logger.info(f"Prompt: {prompt}")
         logger.info(f"Phrases: {phrases}")
 
-        # Get Object Positions
-        # logger.info("Convert Phrases to Object Positions")
+        # Get object words indices in the output of the tokenizer for the prompt
         object_positions = Pharse2idx(prompt, phrases)
 
-        # Get position words indices
-        position_word_indices = []
-        position_word_indices = [prompt.find(position) + 1]
-
-        # Encode Classifier Embeddings
+        # Encode classifier embeddings
         if negative_prompt:
             uncond_input = self.tokenizer(
                 [negative_prompt] * self.cfg.inference.batch_size, 
@@ -126,10 +119,9 @@ class SmartSpatialPipeline():
                 max_length=self.tokenizer.model_max_length, 
                 return_tensors="pt"
             )
-
         uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(self.device))[0]
 
-        # Encode Prompt
+        # Encode the prompt
         input_ids = self.tokenizer(
                 [prompt] * self.cfg.inference.batch_size,
                 padding="max_length",
@@ -137,7 +129,6 @@ class SmartSpatialPipeline():
                 max_length=self.tokenizer.model_max_length,
                 return_tensors="pt",
             )
-
         cond_embeddings = self.text_encoder(input_ids.input_ids.to(self.device))[0]
         text_embeddings = torch.cat([uncond_embeddings, cond_embeddings])
 
@@ -146,18 +137,13 @@ class SmartSpatialPipeline():
         else:
             generator = None
 
+        # Special token indices
         sot_idx, eot_idx = None, None
         if is_special_token_guide:
             sot_idx, eot_idx = get_special_token_indices(self.tokenizer, prompt)
 
-        # noise_scheduler = LMSDiscreteScheduler(
-        #     beta_start=cfg.noise_schedule.beta_start,
-        #     beta_end=cfg.noise_schedule.beta_end,
-        #     beta_schedule=cfg.noise_schedule.beta_schedule,
-        #     num_train_timesteps=cfg.noise_schedule.num_train_timesteps
-        # )
-
         # Initialize DDIMScheduler
+        # You can also try other schedulers like "LMSDiscreteScheduler"
         noise_scheduler = self.ddim_scheduler
 
         noise_scheduler.set_timesteps(self.cfg.inference.timesteps)
@@ -169,116 +155,174 @@ class SmartSpatialPipeline():
         ).to(self.device)
         latents = latents * noise_scheduler.init_noise_sigma
 
-        # if is_used_salt:
-        #     latents = prepare_salt(
-        #         cfg,
-        #         prompt_data=prompt_data,
-
-        #         vae=vae,
-        #         unet=unet,
-        #         tokenizer=tokenizer,
-        #         text_encoder=text_encoder,
-        #         scheduler=noise_scheduler,
-
-        #         bbox_ref_mapping=bbox_ref_mapping,
-
-        #         objects_set=obj_set, # dcit: name: path
-        #         background_set=bg_set
-        #     )[-1].unsqueeze(0).to(device)
-        #     latents = latents * noise_scheduler.init_noise_sigma
-
         loss = torch.tensor(10000)
         losses_each_step = []
         iterations_each_step = []
 
+        # -----------------------------
         # Denoising loop
-        # for index, t in enumerate(tqdm(noise_scheduler.timesteps)):
+        # -----------------------------
         for index, t in enumerate(noise_scheduler.timesteps):
-            # MODIFIED: Adjust guidance scale based on step for finer control
+            # Dynamic guidance scale based on step for finer control
             guidance_scale = 10 if index < len(noise_scheduler.timesteps) // 2 else 7.5
 
+            # ----------------------------------------------------------------------
+            #  A) Get the "Original" attention maps for this step (before guidance)
+            # ----------------------------------------------------------------------
+            with torch.no_grad():
+                # We'll feed the current latents (unmodified by the iterative loop)
+                latents_temp = latents.detach().clone()
+                latents_temp = noise_scheduler.scale_model_input(latents_temp, t)
+
+                if is_used_controlnet:
+                    # Pass latents_temp through ControlNet
+                    control_output, attn_down_control, attn_mid_control = self.controlnet(
+                        latents_temp,
+                        t,
+                        encoder_hidden_states=cond_embeddings,  # or text_embeddings if CFG
+                        controlnet_cond=control_image,
+                        conditioning_scale=controlnet_scale,
+                        return_dict=True,
+                    )
+                    down_block_res_samples = control_output['down_block_res_samples']
+                    mid_block_res_sample = control_output['mid_block_res_sample']
+
+                    # Then pass through UNet
+                    unet_out = self.unet(
+                        latents_temp,
+                        t,
+                        encoder_hidden_states=cond_embeddings,
+                        down_block_additional_residuals=down_block_res_samples,
+                        mid_block_additional_residual=mid_block_res_sample,
+                        return_dict=True
+                    )
+                    noise_pred_orig, attn_map_up_orig, attn_map_mid_orig, attn_map_down_orig = unet_out
+                    # ControlNet's mid attn maps are in attn_mid_control
+                else:
+                    unet_out = self.unet(
+                        latents_temp,
+                        t,
+                        encoder_hidden_states=cond_embeddings,
+                        return_dict=True
+                    )
+                    noise_pred_orig, attn_map_up_orig, attn_map_mid_orig, attn_map_down_orig = unet_out
+                    attn_mid_control = None
+
+            # If needed for "Stay Close", store them in lists or clones
+            # NOTE: You only need to store them if is_stay_close=True, but storing
+            # them unconditionally is also fine.
+            orig_attn_maps_mid = [x.detach().clone() for x in attn_map_mid_orig]  # mid-block
+            # up block might be a list-of-lists, so handle carefully:
+            if len(attn_map_up_orig) > 0 and isinstance(attn_map_up_orig[0], list):
+                # e.g. attn_map_up_orig[0] is a list of Tensors for each up-block
+                orig_attn_maps_up = [
+                    [tensor.detach().clone() for tensor in block] for block in attn_map_up_orig
+                ]
+            else:
+                # e.g. if you only store first up-block
+                orig_attn_maps_up = [
+                    [tensor.detach().clone() for tensor in attn_map_up_orig]
+                ]
+
+            # For ControlNet's mid block
+            orig_attn_maps_mid_control = None
+            if is_used_controlnet and (attn_mid_control is not None):
+                orig_attn_maps_mid_control = [
+                    c_map.detach().clone() for c_map in attn_mid_control
+                ]
+
+            # -------------------------------------------------------------------
+            #  B) Iterative Guidance to refine latents
+            # -------------------------------------------------------------------
             if is_used_attention_guide:
                 iteration = 0
                 losses_each_iteration = []
 
                 v = torch.zeros_like(latents)
 
-                # Guidance
                 loss_threshold = self.cfg.inference.loss_threshold
-                # loss_threshold = 0.5
                 max_iter = self.cfg.inference.max_iter
-                # max_iter = 5
-                # while loss.item() / cfg.inference.loss_scale > cfg.inference.loss_threshold and iteration < cfg.inference.max_iter and index < cfg.inference.max_index_step:
-                while loss.item() / self.cfg.inference.loss_scale > loss_threshold and iteration < max_iter:
-                    # print(f"Timestep: {index}, iteration: {iteration+1}-------------")
+
+                while (loss.item() / self.cfg.inference.loss_scale > loss_threshold) and \
+                    (iteration < max_iter):
 
                     latents = latents.requires_grad_(True)
-                    latent_model_input = latents
-                    latent_model_input = noise_scheduler.scale_model_input(latent_model_input, t)
+                    latent_model_input = noise_scheduler.scale_model_input(latents, t)
 
-                    # ControlNet AG Guidance
-                    attn_down_control=None
-                    attn_mid_control=None
+                    # Forward pass for the guided step
                     if is_used_controlnet:
-                        controlnet_input = latent_model_input
-                        controlnet_prompt_embeds = cond_embeddings
-
-                        # Get ControlNet outputs
                         control_output, attn_down_control, attn_mid_control = self.controlnet(
-                            controlnet_input,
+                            latent_model_input,
                             t,
-                            encoder_hidden_states=controlnet_prompt_embeds,
+                            encoder_hidden_states=cond_embeddings,
                             controlnet_cond=control_image,
                             conditioning_scale=controlnet_scale,
                             return_dict=True,
                         )
+                        down_block_res_samples = control_output['down_block_res_samples']
+                        mid_block_res_sample = control_output['mid_block_res_sample']
 
-                        down_block_res_samples, mid_block_res_sample = control_output['down_block_res_samples'], control_output['mid_block_res_sample']
-
-                        noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = \
-                            self.unet(
-                                latent_model_input,
-                                t,
-                                encoder_hidden_states=cond_embeddings,
-                                down_block_additional_residuals=down_block_res_samples,
-                                mid_block_additional_residual=mid_block_res_sample,
-                                return_dict=True
-                            )
+                        unet_out = self.unet(
+                            latent_model_input,
+                            t,
+                            encoder_hidden_states=cond_embeddings,
+                            down_block_additional_residuals=down_block_res_samples,
+                            mid_block_additional_residual=mid_block_res_sample,
+                            return_dict=True
+                        )
+                        noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = unet_out
                     else:
-                        noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = self.unet(
-                                latent_model_input,
-                                t,
-                                encoder_hidden_states=cond_embeddings
-                            )
+                        unet_out = self.unet(
+                            latent_model_input,
+                            t,
+                            encoder_hidden_states=cond_embeddings,
+                            return_dict=True
+                        )
+                        noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = unet_out
 
-                    # Update latents with guidance
+                    # ---- Compute your cross-attention loss ----
                     loss = compute_ca_loss(
-                        attn_map_integrated_mid,
-                        attn_map_integrated_up,
+                        attn_maps_mid=attn_map_integrated_mid,
+                        attn_maps_up=attn_map_integrated_up,
                         bboxes=bboxes,
                         object_positions=object_positions,
-                        position_word_indices=position_word_indices,
-                        alpha=1,
+                        alpha=1.0,
 
+                        # ControlNet
                         is_used_controlnet_term=is_used_controlnet_term,
                         beta=0.3,
-                        attn_maps_down_control=attn_down_control,
                         attn_maps_mid_control=attn_mid_control,
 
+                        # Special tokens
                         is_special_token_guide=is_special_token_guide,
                         sot_idx=sot_idx,
                         eot_idx=eot_idx,
-                        gamma=1
-                    ) * self.cfg.inference.loss_scale # scale factor
+                        gamma=1.0,
 
-                    # Store the loss for monitoring
+                        is_stay_close=is_stay_close,
+                        stay_close_weight=stay_close_weight,
+                        orig_attn_maps_mid=orig_attn_maps_mid,
+                        orig_attn_maps_up=orig_attn_maps_up,
+                        orig_attn_maps_mid_control=orig_attn_maps_mid_control,
+
+                        is_smoothness=is_smoothness,
+                        smoothness_weight=smoothness_weight,
+                    ) * self.cfg.inference.loss_scale
+
+                    # Store for monitoring
                     losses_each_iteration.append(loss.item())
 
+                    # Gradient w.r.t. latents
                     grad_cond = torch.autograd.grad(loss.requires_grad_(True), [latents])[0]
 
-                    # variance = noise_scheduler.sigmas[index] ** 2 # Original: LMSD scheduler, variance
-                    # variance = noise_scheduler.betas[index]
-                    variance = 1
+                    # Optional gradient clipping for latents
+                    if is_grad_clipping:
+                        grad_norm = grad_cond.norm(p=2)
+                        if grad_norm > grad_clip_threshold:
+                            grad_cond = grad_cond * (grad_clip_threshold / (grad_norm + 1e-8))
+
+                    # Update latents (momentum or direct)
+                    variance = 1.0  # or noise_scheduler.betas[index], etc.
                     if is_used_momentum:
                         v = momentum * v - grad_cond * variance
                         latents = latents + v
@@ -288,104 +332,99 @@ class SmartSpatialPipeline():
                     iteration += 1
                     torch.cuda.empty_cache()
 
-                # Store the iteration step for monotoring
-                if iteration == 0:
-                    iterations_each_step.append(0)
+                    # Store iteration info
+                    if iteration == 0:
+                        iterations_each_step.append(0)
+                        if len(losses_each_step) > 0:
+                            last_loss = losses_each_step[-1][-1]
+                        else:
+                            last_loss = loss.item()
+                        losses_each_step.append([last_loss])
+                    else:
+                        iterations_each_step.append(iteration)
+                        losses_each_step.append(losses_each_iteration)
 
-                    last_loss = losses_each_step[-1][-1]
-                    losses_each_step.append([last_loss])
-                else:
-                    iterations_each_step.append(iteration)
-                    losses_each_step.append(losses_each_iteration)
-
-                if is_save_attn_maps and index % 10 == 0:
-                    # Visualize the attention map
-                    visualize_attention_maps(
-                        attention_maps=attn_map_integrated_mid,
-                        prompt=prompt,
-                        object_positions=object_positions,
-                        timestep=index,
-                        is_save_attn_maps=is_save_attn_maps,
-                        save_path=f"{save_path}/attention_maps_mid",
-                        is_all_tokens=False
-                    )
-
-                    visualize_attention_maps(
-                        attention_maps=attn_map_integrated_up[0],
-                        prompt=prompt,
-                        object_positions=object_positions,
-                        timestep=index,
-                        is_save_attn_maps=is_save_attn_maps,
-                        save_path=f"{save_path}/attention_maps_up",
-                        is_all_tokens=False
-                    )
-
-                    if is_used_controlnet:
+                    # Optional: save attn maps
+                    if is_save_attn_maps and (index % 10 == 0):
                         visualize_attention_maps(
-                            attention_maps=attn_mid_control,
+                            attention_maps=attn_map_integrated_mid,
                             prompt=prompt,
                             object_positions=object_positions,
                             timestep=index,
                             is_save_attn_maps=is_save_attn_maps,
-                            save_path=f"{save_path}/attention_maps_mid_control",
+                            save_path=f"{save_path}/attention_maps_mid",
                             is_all_tokens=False
                         )
 
-            # After getting the optimized latent
+                        visualize_attention_maps(
+                            attention_maps=attn_map_integrated_up[0],
+                            prompt=prompt,
+                            object_positions=object_positions,
+                            timestep=index,
+                            is_save_attn_maps=is_save_attn_maps,
+                            save_path=f"{save_path}/attention_maps_up",
+                            is_all_tokens=False
+                        )
+
+                        if is_used_controlnet:
+                            visualize_attention_maps(
+                                attention_maps=attn_mid_control,
+                                prompt=prompt,
+                                object_positions=object_positions,
+                                timestep=index,
+                                is_save_attn_maps=is_save_attn_maps,
+                                save_path=f"{save_path}/attention_maps_mid_control",
+                                is_all_tokens=False
+                            )
+
+            # ----------------------------------------------------------
+            #  C) Now do the normal CFG step (uncond + cond pass)
+            # ----------------------------------------------------------
             with torch.no_grad():
-                latent_model_input = torch.cat([latents] * 2) # CFG
+                latent_model_input = torch.cat([latents] * 2)
                 latent_model_input = noise_scheduler.scale_model_input(latent_model_input, t)
 
                 if is_used_controlnet:
-                    control_image_cfg = torch.cat([control_image] * 2) # if CFG
-                    # Prepare the input for ControlNet
-                    # controlnet_input = noise_scheduler.scale_model_input(latents.clone(), t)
-                    controlnet_input = latent_model_input
-                    controlnet_prompt_embeds = text_embeddings
-
-                    # Get ControlNet outputs
+                    control_image_cfg = torch.cat([control_image] * 2)
                     control_output, attn_down_control, attn_mid_control = self.controlnet(
-                        controlnet_input,
+                        latent_model_input,
                         t,
-                        encoder_hidden_states=controlnet_prompt_embeds,
+                        encoder_hidden_states=text_embeddings,
                         controlnet_cond=control_image_cfg,
                         conditioning_scale=controlnet_scale,
                         return_dict=True,
                     )
+                    down_block_res_samples = control_output['down_block_res_samples']
+                    mid_block_res_sample = control_output['mid_block_res_sample']
 
-                    down_block_res_samples, mid_block_res_sample = control_output['down_block_res_samples'], control_output['mid_block_res_sample']
-
-                    # Pass through UNet with ControlNet conditioning
-                    noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = \
-                        self.unet(
-                            latent_model_input,
-                            t,
-                            encoder_hidden_states=text_embeddings,
-                            down_block_additional_residuals=down_block_res_samples,
-                            mid_block_additional_residual=mid_block_res_sample,
-                            return_dict=True
-                        )
-
+                    unet_out = self.unet(
+                        latent_model_input,
+                        t,
+                        encoder_hidden_states=text_embeddings,
+                        down_block_additional_residuals=down_block_res_samples,
+                        mid_block_additional_residual=mid_block_res_sample,
+                        return_dict=True
+                    )
+                    noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = unet_out
                     noise_pred = noise_pred.sample
-
                 else:
-                    noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = \
-                        self.unet(
-                            latent_model_input,
-                            t,
-                            encoder_hidden_states=text_embeddings,
-                            return_dict=True
-                        )
+                    unet_out = self.unet(
+                        latent_model_input,
+                        t,
+                        encoder_hidden_states=text_embeddings,
+                        return_dict=True
+                    )
+                    noise_pred, attn_map_integrated_up, attn_map_integrated_mid, attn_map_integrated_down = unet_out
                     noise_pred = noise_pred.sample
 
-                # MODIFIED: Dynamically scale guidance for flexibility in complex prompts
+                # Guidance
                 noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
                 latents = noise_scheduler.step(noise_pred, t, latents).prev_sample
                 torch.cuda.empty_cache()
 
-                if is_save_attn_maps and is_used_attention_guide and index % 10 == 0:
+                if is_save_attn_maps and not is_used_attention_guide and index % 10 == 0:
                     # Visualize the attention map without guidance
                     visualize_attention_maps(
                         attention_maps=attn_map_integrated_mid,
@@ -407,16 +446,16 @@ class SmartSpatialPipeline():
                         is_all_tokens=False
                     )
 
-        # Save losses and iterations to a pickle file
+        # ----------------------------------------------------------------
+        # After the loop: decode latents
+        # ----------------------------------------------------------------
         if is_used_attention_guide:
-            logger.info(f"\nFirst Loss: {losses_each_step[0][0]}")
-            logger.info(f"Last Loss: {losses_each_step[-1][-1]}")
-
+            logger.info(f"\nFirst Loss: {losses_each_step[0][0] if len(losses_each_step) > 0 else None}")
+            logger.info(f"Last Loss: {losses_each_step[-1][-1] if len(losses_each_step) > 0 else None}")
             if is_save_losses:
                 save_to_pkl(losses_each_step, f"{save_path}/losses.pkl")
                 save_to_pkl(iterations_each_step, f"{save_path}/iterations.pkl")
 
-        # Decode to pixel space
         with torch.no_grad():
             logger.info("Decode Image...")
             latents = 1 / 0.18215 * latents
@@ -426,7 +465,7 @@ class SmartSpatialPipeline():
             images = (image * 255).round().astype("uint8")
             pil_images = [Image.fromarray(image) for image in images]
 
-            return pil_images
+        return pil_images
 
     def generate(
         self,
@@ -440,7 +479,7 @@ class SmartSpatialPipeline():
         save_path="output",
 
         is_used_attention_guide=True,
-        is_special_token_guide=True,
+        is_special_token_guide=False,
 
         is_used_controlnet=False,
         is_used_controlnet_term=False,
@@ -450,11 +489,14 @@ class SmartSpatialPipeline():
         is_used_momentum=False,
         momentum = 0.5,
 
-        is_used_salt=False,
-        prompt_data=None,
-        obj_set=None,
-        bg_set=None,
-        bbox_ref_mapping=None,
+        is_stay_close=False,
+        stay_close_weight=0.1,
+ 
+        is_smoothness=False,
+        smoothness_weight=0.01,
+
+        is_grad_clipping=False,
+        grad_clip_threshold=1.0,
 
         is_process_bbox_data=True,
         is_random_seed=False,
@@ -491,13 +533,9 @@ class SmartSpatialPipeline():
             obj_name = bbox_data['caption']
             objects.append(obj_name)
 
-            
             if obj_name in prompt:
                 objects_in_prompt.append(obj_name)
-
-                # TODO: For multi-token objects (e.g. "hello kitty")
                 bboxes_in_prompt.append(bboxes[idx])
-
 
         position = ""
         for pos in position_words:
@@ -552,25 +590,20 @@ class SmartSpatialPipeline():
             is_used_momentum=is_used_momentum,
             momentum=momentum,
 
-            is_used_salt=is_used_salt,
-            prompt_data=prompt_data,
-            obj_set=obj_set,
-            bg_set=bg_set,
-            bbox_ref_mapping=bbox_ref_mapping,
+            is_stay_close=is_stay_close,
+            stay_close_weight=stay_close_weight,
+    
+            is_smoothness=is_smoothness,
+            smoothness_weight=smoothness_weight,
+
+            is_grad_clipping=is_grad_clipping,
+            grad_clip_threshold=grad_clip_threshold,
 
             is_random_seed=is_random_seed,
             negative_prompt=negative_prompt
         )
 
         if is_save_images:
-            """
-            Store:
-            1. images
-            2. attention maps
-            3. losses
-            4. iteration steps
-            """
-
             # Save images
             for index, pil_image in enumerate(pil_images):
                 image_path = os.path.join(save_path, 'output_{}.png'.format(index))
