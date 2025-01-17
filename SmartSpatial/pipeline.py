@@ -1,22 +1,21 @@
 from transformers import pipeline, CLIPTextModel, CLIPTokenizer
 from my_model import controlnet, unet_2d_condition
-from diffusers import DDIMScheduler, AutoencoderKL, LMSDiscreteScheduler
+from diffusers import DDIMScheduler, AutoencoderKL
 import json
 
 import numpy as np
 from PIL import Image
 
 from SmartSpatial.utils import (
-    pil_to_numpy, 
-    numpy_to_pt, 
     save_to_pkl, 
     compute_ca_loss, 
     visualize_attention_maps,
     convert_bbox_data,
 
-    get_special_token_indices
+    get_special_token_indices,
+    Pharse2idx
 )
-from utils import Pharse2idx, sentence_to_list, draw_box, setup_logger
+from utils import draw_box, setup_logger
 import torch
 import os
 from omegaconf import OmegaConf

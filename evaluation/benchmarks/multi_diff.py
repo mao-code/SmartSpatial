@@ -21,7 +21,7 @@ from MultiDiffusion.region_based import (
 )
 from tqdm import tqdm
 import argparse
-from .coco2017.prepare import COCO2017
+from dataset.coco2017 import COCO2017
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """

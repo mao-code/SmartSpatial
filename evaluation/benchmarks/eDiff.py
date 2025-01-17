@@ -24,7 +24,7 @@ from paint_with_words_sd.paint_with_words import paint_with_words
 from PIL import Image
 from tqdm import tqdm
 import argparse
-from .coco2017.prepare import COCO2017
+from dataset.coco2017 import COCO2017
 
 def create_mask_from_bbox(bbox, image_width, image_height):
     """

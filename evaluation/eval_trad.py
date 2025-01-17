@@ -18,7 +18,7 @@ from evaluation.eval_utils import (
 
 import os
 import argparse
-from .coco2017.prepare import COCO2017
+from ..dataset.coco2017 import COCO2017
 
 prompt_datas = {
     "front": prompt_datas_front,

@@ -19,7 +19,7 @@ from PIL import Image
 
 from tqdm import tqdm
 import argparse
-from .coco2017.prepare import COCO2017
+from dataset.coco2017 import COCO2017
 
 # --------- BoxDiff imports ----------
 # modify the import in BoxDiff (to relative path) for 2 files (run_sd_boxdiff.py and pipeline)

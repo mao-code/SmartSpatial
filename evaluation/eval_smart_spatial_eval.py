@@ -13,7 +13,7 @@ from dataset.spatial_prompt import (
     prompt_datas_above,
     prompt_datas_below
 )
-from .coco2017.prepare import COCO2017
+from ..dataset.coco2017 import COCO2017
 
 import torch
 

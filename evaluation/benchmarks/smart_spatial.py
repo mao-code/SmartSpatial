@@ -20,7 +20,7 @@ from dataset.spatial_prompt import (
 )
 from utils import load_image
 from SmartSpatial.utils import convert_bbox_data, pil_to_numpy, numpy_to_pt
-from .coco2017.prepare import COCO2017
+from dataset.coco2017 import COCO2017
 
 front_depth_img = load_image("reference_images/depth_maps/front.png")
 behind_depth_img = load_image("reference_images/depth_maps/behind.png")
