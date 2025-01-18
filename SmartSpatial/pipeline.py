@@ -66,8 +66,6 @@ class SmartSpatialPipeline():
         prompt,
         bboxes,
         phrases,
-        center,
-        position,
         logger,
         is_save_attn_maps=False,
         is_save_losses=False,
@@ -569,8 +567,6 @@ class SmartSpatialPipeline():
             examples['prompt'],
             examples['bboxes'],
             examples['phrases'],
-            examples['center'],
-            examples['position'],
 
             logger,
 
