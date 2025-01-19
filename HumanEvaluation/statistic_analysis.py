@@ -1,14 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import binom_test
+from scipy.stats import binomtest
 from statsmodels.stats.inter_rater import fleiss_kappa
 import numpy as np
 import statsmodels.api as sm
 
 def main():
     # Load data
-    testers_data_path = 'form_raw_result/testers.csv'
-    vlm_data_path = 'form_raw_result/vlm.csv'
+    testers_data_path = 'HumanEvaluation/form_raw_result/testers.csv'
+    vlm_data_path = 'HumanEvaluation/form_raw_result/vlm.csv'
 
     testers_data = pd.read_csv(testers_data_path)
     vlm_data = pd.read_csv(vlm_data_path)
@@ -58,7 +58,7 @@ def main():
         unique_responses = testers_data[question].nunique()
 
         # H_0: Proportion of matches is due to random chance (p = 1/unique_responses)
-        p_value = binom_test(matches, total_testers, 1 / unique_responses, alternative='greater')
+        p_value = binomtest(matches, total_testers, 1 / unique_responses, alternative='greater').pvalue
         proportion_significance_results.append({
             "Question": question,
             "VLM Response": vlm_response,
@@ -171,9 +171,6 @@ def main():
     })
 
     print(f"""
-        ## Statistic Summary:
-        {statistics_summary}
-
         ## CI Summary: 
         {ci_summary}
     """)
