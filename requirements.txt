@@ -1,0 +1,13 @@
+torch
+torchvision
+torchaudio
+transformers
+diffusers
+omegaconf
+opencv-python
+matplotlib
+pycocotools
+scikit-image
+openai
+git+https://github.com/openai/CLIP.git
+spacy
