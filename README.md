@@ -1,5 +1,8 @@
 # SmartSpatial: Enhancing the 3D Spatial Arrangement Capabilities of Stable Diffusion Models and Introducing a Novel 3D Spatial Evaluation Framework
 [![Badge](https://img.shields.io/badge/arXiv-SmartSpatial-blue)](https://arxiv.org/abs/2501.01998)
+[![Poster](https://img.shields.io/badge/Poster-PDF-yellow)](https://drive.google.com/file/d/1l8bLYd08t2o94TuZZZ66ZOs85DWJuKCP/view?usp=drive_link)
+[![Slides](https://img.shields.io/badge/Slides-PDF-orange)](https://drive.google.com/file/d/1T94lhcSmsQxZ2vhrPweGk_QgwMYjochx/view?usp=drive_link)
+
 
 ## Overview
 This is the implementation code for SmartSpatial.
