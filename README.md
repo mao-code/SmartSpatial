@@ -3,6 +3,7 @@
 [![Poster](https://img.shields.io/badge/Poster-PDF-yellow)](https://drive.google.com/file/d/1l8bLYd08t2o94TuZZZ66ZOs85DWJuKCP/view?usp=drive_link)
 [![Slides](https://img.shields.io/badge/Slides-PDF-orange)](https://drive.google.com/file/d/1T94lhcSmsQxZ2vhrPweGk_QgwMYjochx/view?usp=drive_link)
 
+*This paper has been accepted by IJCAI 2025 AI Arts and Creativity track.
 
 ## Overview
 This is the implementation code for SmartSpatial.
